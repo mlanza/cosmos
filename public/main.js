@@ -1,4 +1,4 @@
-define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/transients', 'atomic/reactives', 'atomic/validates', 'atomic/immutables', 'atomic/repos', 'context'], function(fetch, _, dom, t, mut, $, vd, imm, repos, context){
+define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/transients', 'atomic/reactives', 'atomic/validates', 'atomic/immutables', 'atomic/repos', 'cosmos/ontology', 'context'], function(fetch, _, dom, t, mut, $, vd, imm, repos, ont, context){
 
   //TODO Apply effects (destruction, modification, addition) to datastore.
   //TODO Improve efficiency (with an index decorator?) of looking up an entity in a buffer by pk rather than guid.
@@ -84,10 +84,6 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     resolve: null //TODO returns both resolved and unresolved values
   });
 
-  var IResolveable = _.protocol({
-    resolved: null
-  });
-
   var ISerializable = _.protocol({
     serialize: null
   });
@@ -153,191 +149,9 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     IBuffer: IBuffer
   }
 
-  function ConstrainedCollection(constraints, coll){
-    this.constraints = constraints;
-    this.coll = coll;
-  }
-
-  (function(){
-
-    function reduce(self, xf, init){
-      var memo = init,
-          ys = self;
-      while(_.seq(ys)){
-        var y = _.first(ys);
-        memo = xf(memo, y);
-        ys = _.rest(ys);
-      }
-      return memo;
-    }
-
-    function reducekv(self, xf, init){
-      return _.reduce(function(memo, idx){
-        return xf(memo, idx, _.nth(self, idx));
-      }, init, _.range(0, count(self)));
-    }
-
-    function conj(self, value){
-      return new self.constructor(self.constraints, _.conj(self.coll, value));
-    }
-
-    function equiv(self, other){
-      return self === other; //TODO self.constructor === other.constructor && _.every()
-    }
-
-    function assoc(self, idx, value){
-      return new self.constructor(self.constraints, _.assoc(self.coll, idx, value));
-    }
-
-    function seq(self){
-      return _.seq(self.coll) ? self : null;
-    }
-
-    function empty(self){
-      return new self.constructor(self.constraints, _.empty(self.coll));
-    }
-
-    function deref(self){
-      return self.coll;
-    }
-
-    function fmap(self, f){
-      return new self.constructor(self.constraints, _.fmap(self.coll, f));
-    }
-
-    function constraints1(self){
-      return self.constraints;
-    }
-
-    function constraints2(self, constraints){
-      return new self.constructor(constraints, self.coll);
-    }
-
-    var constraints = _.overload(null, constraints1, constraints2);
-
-    _.doto(ConstrainedCollection,
-      _.forward("coll", ISeq, INext, IInclusive, ICounted, IIndexed, IAssociative),
-      _.implement(IEmptyableCollection, {empty: empty}),
-      _.implement(IFunctor, {fmap: fmap}),
-      _.implement(IConstrainable, {constraints: constraints}),
-      _.implement(ILookup, {lookup: _.nth}),
-      _.implement(IAssociative, {assoc: assoc}),
-      _.implement(IDeref, {deref: deref}),
-      _.implement(IReduce, {reduce: reduce}),
-      _.implement(IKVReduce, {reducekv: reducekv}),
-      _.implement(IEquiv, {equiv: equiv}),
-      _.implement(ICollection, {conj: conj}),
-      _.implement(ISeqable, {seq: seq}));
-
-  })();
-
-  function ResolvingCollection(constraints, coll){
-    this.constraints = constraints;
-    this.coll = coll;
-  }
-
-  (function(){
-
-    function conj(self, value){
-      return new self.constructor(self.constraints, _.conj(self.coll, value));
-    }
-
-    function assoc(self, idx, value){
-      return new self.constructor(self.constraints, _.assoc(self.coll, idx, value));
-    }
-
-    function empty(self){
-      return new self.constructor(self.constraints, _.empty(self.coll));
-    }
-
-    function constraints1(self){
-      return IConstrainable.constraints(self.coll);
-    }
-
-    function constraints2(self, constraints){
-      return new self.constructor(self.constraints, IConstrainable.constraints(self.coll, constraints));
-    }
-
-    var constraints = _.overload(null, constraints1, constraints2);
-
-    function resolved(self){
-      return IConstrainable.constraints(self.coll, self.constraints);
-    }
-
-    _.doto(ResolvingCollection,
-      _.forward("coll", ISeq, INext, IInclusive, ICounted, IIndexed, IAssociative, ISeqable, IDeref, IFunctor, IReduce, IKVReduce),
-      _.implement(IResolveable, {resolved: resolved}),
-      _.implement(IEmptyableCollection, {empty: empty}),
-      _.implement(IConstrainable, {constraints: constraints}),
-      _.implement(ILookup, {lookup: _.nth}),
-      _.implement(IAssociative, {assoc: assoc}),
-      _.implement(ICollection, {conj: conj}));
-
-  })();
-
-  var resolvingCollection = _.constructs(ResolvingCollection);
-
-  function ClampedCollection(cardinality, coll){
-    this.cardinality = cardinality;
-    this.coll = coll;
-  }
-
-  function clampedCollection2(cardinality, coll){
-    return new ClampedCollection(cardinality, coll);
-  }
-
-  function clampedCollection1(cardinality){
-    return clampedCollection2(cardinality, constrainedCollection(vd.and(cardinality)));
-  }
-
-  var clampedCollection = _.overload(null, clampedCollection1, clampedCollection2);
-
-  (function(){
-
-    function fmap(self, f){
-      return new self.constructor(self.cardinality, _.fmap(self.coll, f));
-    }
-
-    function conj(self, value){
-      var coll = ICollection.conj(self.coll, value);
-      return new self.constructor(self.cardinality, _.into(_.empty(coll), _.drop(_.max(_.count(coll) - _.end(self.cardinality), 0), coll)));
-    }
-
-    function assoc(self, idx, value){
-      return new self.constructor(self.cardinality, _.assoc(self.coll, idx, value));
-    }
-
-    function empty(self){
-      return new self.constructor(self.cardinality, _.into(_.empty(self.coll), _.take(_.start(self.cardinality), self.coll)));
-    }
-
-    function constraints1(self){
-      return IConstrainable.constraints(self.coll);
-    }
-
-    function constraints2(self, constraints){
-      return new self.constructor(self.cardinality, IConstrainable.constraints(self.coll, constraints));
-    }
-
-    var constraints = _.overload(null, constraints1, constraints2);
-
-    _.doto(ClampedCollection,
-      _.forward("coll", IReduce, IKVReduce, ISeq, INext, ICounted, IInclusive, IEquiv, IIndexed, IAssociative, ISeqable, IDeref),
-      _.implement(IEmptyableCollection, {empty: empty}),
-      _.implement(IFunctor, {fmap: fmap}),
-      _.implement(IConstrainable, {constraints: constraints}),
-      _.implement(ILookup, {lookup: _.nth}),
-      _.implement(IAssociative, {assoc: assoc}),
-      _.implement(ICollection, {conj: conj}));
-
-  })();
-
-  var constrainedCollection = _.fnil(_.constructs(ConstrainedCollection), vd.and(vd.opt), [], []),
-      optional  = clampedCollection(vd.opt),
-      required  = clampedCollection(vd.req),
-      unlimited = constrainedCollection(vd.and(vd.unlimited)),
-      entities  = vd.constrain(unlimited, vd.collOf(vd.isa(_.GUID))),
-      entity    = vd.constrain(required, vd.collOf(vd.isa(_.GUID)));
+  var unlimited = ont.constrainedCollection(vd.and(vd.unlimited));
+      entities  = vd.constrain(unlimited, vd.collOf(vd.isa(_.GUID)));
+      entity    = vd.constrain(ont.required, vd.collOf(vd.isa(_.GUID)));
 
   function reassign(self, key, f){
     var field = IKind.field(self, key),
@@ -459,7 +273,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     }
 
     function field(self, key){
-      return IKind.field(self.topic, key) || _.assoc(_.isArray(_.get(self.attrs, key)) ? _field(key, unlimited, valuesCaster) : _field(key, optional, valueCaster), "missing", true);
+      return IKind.field(self.topic, key) || _.assoc(_.isArray(_.get(self.attrs, key)) ? _field(key, unlimited, valuesCaster) : _field(key, ont.optional, valueCaster), "missing", true);
     }
 
     function kind(self){ //TODO use?
@@ -637,7 +451,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
   }
 
   function field1(key){
-    return field2(key, optional);
+    return field2(key, ont.optional);
   }
 
   var field = _.overload(null, field1, field2, field3);
@@ -920,13 +734,13 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     _.assoc(field("id", entity, function(coll){
       return recaster(_.guid, _.str, valueCaster(coll));
     }), "label", "ID"),
-    _.assoc(field("title", required), "label", "Title"),
-    _.assoc(field("text", optional), "label", "Text"),
-    _.assoc(field("child", resolvingCollection(vd.and(vd.unlimited, vd.collOf(vd.isa(Task, Tiddler))), entities), function(coll){
+    _.assoc(field("title", ont.required), "label", "Title"),
+    _.assoc(field("text", ont.optional), "label", "Text"),
+    _.assoc(field("child", ont.resolvingCollection(vd.and(vd.unlimited, vd.collOf(vd.isa(Task, Tiddler))), entities), function(coll){
       return recaster(_.guid, _.identity, valuesCaster(coll));
     }), "label", "Child"),
     _.assoc(field("tag", unlimited, valuesCaster), "label", "Tag", "appendonly", true),
-    _.assoc(field("modified", vd.constrain(optional, vd.collOf(_.isDate)), function(coll){
+    _.assoc(field("modified", vd.constrain(ont.optional, vd.collOf(_.isDate)), function(coll){
       return recaster(_.date, toLocaleString, valueCaster(coll));
     }), "label", "Modified Date"));
 
@@ -960,14 +774,14 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     topic(Task,
       "task",
       _.conj(defaults,
-        _.assoc(field("priority", vd.constrain(optional, vd.collOf(vd.choice([1, 2, 3])))), "label", "Priority"),
-        _.assoc(field("due", vd.constrain(optional, vd.collOf(_.isDate)), function(coll){
+        _.assoc(field("priority", vd.constrain(ont.optional, vd.collOf(vd.choice([1, 2, 3])))), "label", "Priority"),
+        _.assoc(field("due", vd.constrain(ont.optional, vd.collOf(_.isDate)), function(coll){
           return recaster(_.date, toLocaleString, valueCaster(coll));
         }), "label", "Due Date"),
         _.assoc(computedField("overdue", [isOverdue]), "label", "Overdue"),
         _.assoc(computedField("flags", [typed, flag("overdue", isOverdue), flag("important", isImportant)]), "label", "Flags"),
         _.assoc(field("assignee", entities), "label", "Assignee"),
-        _.assoc(field("expanded", vd.constrain(required, vd.collOf(_.isBoolean))), "label", "Expanded")));
+        _.assoc(field("expanded", vd.constrain(ont.required, vd.collOf(_.isBoolean))), "label", "Expanded")));
 
   var work = _.conj(ontology(), tiddler, task);
 
@@ -2622,8 +2436,6 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
       ol: ol,
       c: c,
       e: e,
-      optional: optional,
-      required: required,
       unlimited: unlimited,
       assertionStore: assertionStore,
       dirtyKeys: dirtyKeys,
@@ -2637,5 +2449,3 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     }), _.impart(_, _.partly));
 
 });
-
-//# sourceURL=entities.js

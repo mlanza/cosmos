@@ -127,6 +127,9 @@ define('jquery', ["vendor/jquery"], function(){
     }));
   }
 })(["atomic/core", "atomic/dom", "atomic/immutables", "atomic/reactives", "atomic/repos", "atomic/transducers", "atomic/transients", "atomic/validates", "atomic/html", "atomic/svg"]);
+define('cosmos/ontology', ["atomic/core", "vendor/cosmos/ontology"], function(_, ont){
+  return _.impart(ont, _.partly);
+});
 define('cmd/imports', function(){
   return {
     "_": "atomic/core",
@@ -138,7 +141,8 @@ define('cmd/imports', function(){
     "vd": "atomic/validates",
     "html": "atomic/html",
     "svg": "atomic/svg",
-    "repos": "atomic/repos"
+    "repos": "atomic/repos",
+    "ont": "cosmos/ontology"
   }
 });
 define('cmd', ["atomic/core", "cmd/imports", "promise"], function(_, defaults, Promise){
