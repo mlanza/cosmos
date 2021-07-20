@@ -1,2 +1,2 @@
 # Cosmos
-Personal Information Manager
+Personal Information Manager (Outliner)
