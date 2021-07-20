@@ -1,6 +1,7 @@
 npm-debug.log
 node_modules/*
 public/assets/tests.js
+public/assets/vendor/cosmos/*
 public/data/*
 lib
 _src

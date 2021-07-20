@@ -4,10 +4,10 @@ import json  from '@rollup/plugin-json';
 
 export default {
   input: [
-    //'src/core.js'
+    'src/ontology.js'
   ],
   output: {
-    dir: 'public/assets/vendor/atomic',
+    dir: 'public/assets/vendor/cosmos',
     format: 'amd',
     interop: false,
     globals: {
@@ -44,7 +44,8 @@ export default {
     "atomic/validates",
     "atomic/html",
     "atomic/svg",
-    "atomic/dom"
+    "atomic/dom",
+    "cosmos/ontology"
   ],
   plugins: [
     resolve(),
