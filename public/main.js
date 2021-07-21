@@ -264,131 +264,6 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     }, imm.distinct(_.concat(_.keys(self.attrs), _.keys(other.attrs))));
   }
 
-  var ComputedField = (function(){
-
-    function ComputedField(attrs, computations, emptyColl){
-      this.attrs = attrs;
-      this.computations = computations;
-      this.emptyColl = emptyColl;
-    }
-
-    function lookup(self, key){
-      return self.attrs[key];
-    }
-
-    function assoc(self, key, value){
-      return new self.constructor(_.assoc(self.attrs, key, value), self.computations, self.emptyColl);
-    }
-
-    function contains(self, key){
-      return _.contains(self.attrs, key);
-    }
-
-    function aget(self, entity){
-      return _.into(self.emptyColl, _.filter(_.isSome, _.map(_.applying(entity), self.computations)));
-    }
-
-    function identifier(self){
-      return _.get(self, "key");
-    }
-
-    function constraints(self){
-      return IConstrainable.constraints(self.emptyColl);
-    }
-
-    return _.doto(ComputedField,
-      _.implement(ILookup, {lookup: lookup}),
-      _.implement(IAssociative, {contains: contains, assoc: assoc}),
-      _.implement(IConstrainable, {constraints: constraints}),
-      _.implement(_.IIdentifiable, {identifier: identifier}),
-      _.implement(ont.IField, {aget: aget}));
-
-  })();
-
-  function computedField(key, computations, emptyColl){
-    return new ComputedField({key: key, readonly: true, missing: false, computed: true}, computations, emptyColl || []);
-  }
-
-  function Schema(fields){
-    this.fields = fields;
-  }
-
-  (function(){
-
-    function conj(self, field){
-      return new self.constructor(_.assoc(self.fields, _.identifier(field), field));
-    }
-
-    function lookup(self, key){
-      return _.get(self.fields, key);
-    }
-
-    function keys(self){
-      return _.keys(self.fields);
-    }
-
-    function vals(self){
-      return _.vals(self.fields);
-    }
-
-    function dissoc(self, key){
-      return new self.constructor(_.dissoc(self.fields, key));
-    }
-
-    function merge(self, other){
-      return _.reduce(_.conj, self, _.vals(other));
-    }
-
-    _.doto(Schema,
-      _.implement(IMergable, {merge: merge}),
-      _.implement(IMap, {keys: keys, vals: vals, dissoc: dissoc}),
-      _.implement(ILookup, {lookup: lookup}),
-      _.implement(ICollection, {conj: conj}));
-
-  })();
-
-  var schema = _.constructs(Schema);
-
-  function Ontology(topics){
-    this.topics = topics;
-  }
-
-  (function(){
-
-    function conj(self, topic){
-      return new self.constructor(_.assoc(self.topics, _.identifier(topic), topic));
-    }
-
-    function lookup(self, key){
-      return _.get(self.topics, key);
-    }
-
-    function keys(self){
-      return _.keys(self.topics);
-    }
-
-    function vals(self){
-      return _.vals(self.topics);
-    }
-
-    function dissoc(self, key){
-      return new self.constructor(_.dissoc(self.topics, key));
-    }
-
-    function merge(self, other){
-      return _.reduce(_.conj, self, _.vals(other));
-    }
-
-    _.doto(Ontology,
-      _.implement(IMergable, {merge: merge}),
-      _.implement(IMap, {keys: keys, vals: vals, dissoc: dissoc}),
-      _.implement(ILookup, {lookup: lookup}),
-      _.implement(ICollection, {conj: conj}));
-
-  })();
-
-  var ontology = _.fnil(_.constructs(Ontology), {});
-
   function JsonResource(url, ontology) {
     this.url = url;
     this.ontology = ontology;
@@ -537,7 +412,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     ientity,
     tiddlerBehavior("title", "text"));
 
-  var defaults = _.conj(schema(),
+  var defaults = _.conj(ont.schema(),
     _.assoc(ont.field("id", entity, function(coll){
       return ont.recaster(_.guid, _.str, ont.valueCaster(coll));
     }), "label", "ID"),
@@ -575,7 +450,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     topic(Tiddler,
       "tiddler",
       _.conj(defaults,
-        _.assoc(computedField("flags", [typed]), "label", "Flags")));
+        _.assoc(ont.computedField("flags", [typed]), "label", "Flags")));
 
   var task =
     topic(Task,
@@ -585,12 +460,12 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
         _.assoc(ont.field("due", vd.constrain(ont.optional, vd.collOf(_.isDate)), function(coll){
           return ont.recaster(_.date, toLocaleString, ont.valueCaster(coll));
         }), "label", "Due Date"),
-        _.assoc(computedField("overdue", [isOverdue]), "label", "Overdue"),
-        _.assoc(computedField("flags", [typed, flag("overdue", isOverdue), flag("important", isImportant)]), "label", "Flags"),
+        _.assoc(ont.computedField("overdue", [isOverdue]), "label", "Overdue"),
+        _.assoc(ont.computedField("flags", [typed, flag("overdue", isOverdue), flag("important", isImportant)]), "label", "Flags"),
         _.assoc(ont.field("assignee", entities), "label", "Assignee"),
         _.assoc(ont.field("expanded", vd.constrain(ont.required, vd.collOf(_.isBoolean))), "label", "Expanded")));
 
-  var work = _.conj(ontology(), tiddler, task);
+  var work = _.conj(ont.ontology(), tiddler, task);
 
   function Domain(repos){
     this.repos = repos;
