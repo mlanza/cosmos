@@ -106,25 +106,13 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     changes: null //changed entities
   });
 
-  var IKind = _.protocol({
-    kind: null,
-    field: null
-  });
-
   var IEntity = _.protocol({
     id: null,
     assertions: null
   });
 
-  var IField = _.protocol({
-    aget: null,
-    aset: null
-  });
-
   var protocols = {
     ISerializable: ISerializable,
-    IKind: IKind,
-    IField: IField,
     IEntity: IEntity,
     IResolver: IResolver,
     ITiddler: ITiddler,
@@ -141,47 +129,6 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
   var unlimited = ont.constrainedCollection(vd.and(vd.unlimited));
       entities  = vd.constrain(unlimited, vd.collOf(vd.isa(_.GUID)));
       entity    = vd.constrain(ont.required, vd.collOf(vd.isa(_.GUID)));
-
-  function reassign(self, key, f){
-    var field = IKind.field(self, key),
-        values = IField.aget(field, self),
-        revised = f(values);
-    return revised === values ? self : IField.aset(field, self, _.into(_.empty(values), revised));
-  }
-
-  function assert3(self, key, value){
-    return reassign(self, key, _.conj(_, value));
-  }
-
-  var assert = _.overload(null, null, null, assert3, _.reducing(assert3));
-
-  function retract3(self, key, value){
-    return reassign(self, key, _.branch(_.includes(_, value), _.remove(_.eq(_, value), _), _.identity));
-  }
-
-  function retract2(self, key){
-    return reassign(self, key, _.branch(_.seq, _.empty, _.identity));
-  }
-
-  var retract = _.overload(null, null, retract2, retract3, _.reducing(retract3));
-
-  function asserts3(self, key, value){
-    return _.seq(_.filter(function(assertion){
-      return _.equiv(value, _.nth(assertion, 1));
-    }, asserts2(self, key)));
-  }
-
-  function asserts2(self, key){
-    return IField.aget(IKind.field(self, key), self);
-  }
-
-  function asserts1(self){
-    return _.seq(_.mapcat(function(key){
-      return asserts2(self, key);
-    }, _.keys(self)));
-  }
-
-  var asserts = _.overload(null, asserts1, asserts2, asserts3);
 
   function Assertion(attrs){
     this.attrs = attrs;
@@ -244,7 +191,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     function assertions(self){
       var id = IEntity.id(self);
       return _.mapcat(function(key){
-        var fld = IKind.field(self, key);
+        var fld = ont.fld(self, key);
         return _.get(fld, "computed") ? [] : _.map(function(value){
           return assertion(id, key, value);
         }, _.get(self, key));
@@ -261,8 +208,8 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
       return _.guid(self.attrs.id);
     }
 
-    function field(self, key){
-      return IKind.field(self.topic, key) || _.assoc(_.isArray(_.get(self.attrs, key)) ? _field(key, unlimited, ont.valuesCaster) : _field(key, ont.optional, ont.valueCaster), "missing", true);
+    function fld(self, key){
+      return ont.fld(self.topic, key) || _.assoc(_.isArray(_.get(self.attrs, key)) ? ont.field(key, unlimited, ont.valuesCaster) : ont.field(key, ont.optional, ont.valueCaster), "missing", true);
     }
 
     function kind(self){ //TODO use?
@@ -270,11 +217,11 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     }
 
     function lookup(self, key){
-      return IField.aget(field(self, key), self);
+      return ont.aget(ont.field(self, key), self);
     }
 
     function assoc(self, key, values){
-      return IField.aset(field(self, key), self, values);
+      return ont.aset(ont.field(self, key), self, values);
     }
 
     function contains(self, key){
@@ -291,7 +238,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
 
     function constraints(self){
       return _.reduce(function(memo, key){
-        return _.append(memo, vd.optional(key, IConstrainable.constraints(field(self, key))));
+        return _.append(memo, vd.optional(key, IConstrainable.constraints(ont.field(self, key))));
       }, vd.and(), keys(self));
     }
 
@@ -307,7 +254,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
       _.implement(IVertex, {outs: outs}),
       _.implement(ILookup, {lookup: lookup}),
       _.implement(IAssociative, {assoc: assoc, contains: contains}),
-      _.implement(IKind, {field: field, kind: kind}));
+      _.implement(ont.IKind, {fld: fld, kind: kind}));
 
   })();
 
@@ -316,70 +263,6 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
       return self.attrs[key] === other.attrs[key];
     }, imm.distinct(_.concat(_.keys(self.attrs), _.keys(other.attrs))));
   }
-
-  var Field = (function(){
-
-    function Field(attrs, caster){
-      this.attrs = attrs;
-      this.caster = caster;
-    }
-
-    function lookup(self, key){
-      return self.attrs[key];
-    }
-
-    function assoc(self, key, value){
-      return new self.constructor(_.assoc(self.attrs, key, value), self.caster);
-    }
-
-    function contains(self, key){
-      return _.contains(self.attrs, key);
-    }
-
-    function aget(self, entity){
-      var key = _.get(self, "key");
-      return _.just(entity.attrs, _.get(_, key), function(value){
-        return ont.cast(self.caster, value);
-      });
-    }
-
-    function aset(self, entity, values){
-      var key =  _.get(self, "key"),
-          value = ont.uncast(self.caster, values);
-      return new entity.constructor(entity.topic, _.isSome(value) ? _.assoc(entity.attrs, key, value) : _.dissoc(entity.attrs, self.key));
-    }
-
-    function identifier(self){
-      return _.get(self, "key");
-    }
-
-    function constraints(self){
-      return IConstrainable.constraints(ont.cast(self.caster, null));
-    }
-
-    return _.doto(Field,
-      _.implement(ILookup, {lookup: lookup}),
-      _.implement(IAssociative, {contains: contains, assoc: assoc}),
-      _.implement(IConstrainable, {constraints: constraints}),
-      _.implement(_.IIdentifiable, {identifier: identifier}),
-      _.implement(IField, {aget: aget, aset: aset}));
-
-  })();
-
-  function field3(key, emptyColl, casts){
-    return new Field({key: key, readonly: false, missing: false, computed: false}, casts(emptyColl)); //include defaults here
-  }
-
-  function field2(key, emptyColl){
-    return field3(key, emptyColl, ont.valueCaster);
-  }
-
-  function field1(key){
-    return field2(key, ont.optional);
-  }
-
-  var field = _.overload(null, field1, field2, field3);
-  var _field = field;
 
   var ComputedField = (function(){
 
@@ -418,7 +301,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
       _.implement(IAssociative, {contains: contains, assoc: assoc}),
       _.implement(IConstrainable, {constraints: constraints}),
       _.implement(_.IIdentifiable, {identifier: identifier}),
-      _.implement(IField, {aget: aget}));
+      _.implement(ont.IField, {aget: aget}));
 
   })();
 
@@ -587,7 +470,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
       return _.get(self, "key");
     }
 
-    function field(self, key){
+    function fld(self, key){
       return _.get(self.schema, key);
     }
 
@@ -598,7 +481,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     return _.doto(Topic,
       _.implement(ILookup, {lookup: lookup}),
       _.implement(IAssociative, {assoc: assoc, contains: contains}),
-      _.implement(IKind, {field: field}),
+      _.implement(ont.IKind, {fld: fld}),
       _.implement(INamable, {name: name}),
       _.implement(_.IIdentifiable, {identifier: identifier}),
       _.implement(IMap, {keys: keys}),
@@ -625,7 +508,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
       }
 
       function write(self, text){
-        return assert(self, key, text);
+        return ont.assert(self, key, text);
       }
 
       return _.overload(null, read, write);
@@ -655,16 +538,16 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     tiddlerBehavior("title", "text"));
 
   var defaults = _.conj(schema(),
-    _.assoc(field("id", entity, function(coll){
+    _.assoc(ont.field("id", entity, function(coll){
       return ont.recaster(_.guid, _.str, ont.valueCaster(coll));
     }), "label", "ID"),
-    _.assoc(field("title", ont.required), "label", "Title"),
-    _.assoc(field("text", ont.optional), "label", "Text"),
-    _.assoc(field("child", ont.resolvingCollection(vd.and(vd.unlimited, vd.collOf(vd.isa(Task, Tiddler))), entities), function(coll){
+    _.assoc(ont.field("title", ont.required), "label", "Title"),
+    _.assoc(ont.field("text", ont.optional), "label", "Text"),
+    _.assoc(ont.field("child", ont.resolvingCollection(vd.and(vd.unlimited, vd.collOf(vd.isa(Task, Tiddler))), entities), function(coll){
       return ont.recaster(_.guid, _.identity, ont.valuesCaster(coll));
     }), "label", "Child"),
-    _.assoc(field("tag", unlimited, ont.valuesCaster), "label", "Tag", "appendonly", true),
-    _.assoc(field("modified", vd.constrain(ont.optional, vd.collOf(_.isDate)), function(coll){
+    _.assoc(ont.field("tag", unlimited, ont.valuesCaster), "label", "Tag", "appendonly", true),
+    _.assoc(ont.field("modified", vd.constrain(ont.optional, vd.collOf(_.isDate)), function(coll){
       return ont.recaster(_.date, toLocaleString, ont.valueCaster(coll));
     }), "label", "Modified Date"));
 
@@ -698,14 +581,14 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     topic(Task,
       "task",
       _.conj(defaults,
-        _.assoc(field("priority", vd.constrain(ont.optional, vd.collOf(vd.choice([1, 2, 3])))), "label", "Priority"),
-        _.assoc(field("due", vd.constrain(ont.optional, vd.collOf(_.isDate)), function(coll){
+        _.assoc(ont.field("priority", vd.constrain(ont.optional, vd.collOf(vd.choice([1, 2, 3])))), "label", "Priority"),
+        _.assoc(ont.field("due", vd.constrain(ont.optional, vd.collOf(_.isDate)), function(coll){
           return ont.recaster(_.date, toLocaleString, ont.valueCaster(coll));
         }), "label", "Due Date"),
         _.assoc(computedField("overdue", [isOverdue]), "label", "Overdue"),
         _.assoc(computedField("flags", [typed, flag("overdue", isOverdue), flag("important", isImportant)]), "label", "Flags"),
-        _.assoc(field("assignee", entities), "label", "Assignee"),
-        _.assoc(field("expanded", vd.constrain(ont.required, vd.collOf(_.isBoolean))), "label", "Expanded")));
+        _.assoc(ont.field("assignee", entities), "label", "Assignee"),
+        _.assoc(ont.field("expanded", vd.constrain(ont.required, vd.collOf(_.isBoolean))), "label", "Expanded")));
 
   var work = _.conj(ontology(), tiddler, task);
 
@@ -1363,9 +1246,9 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
       //TODO move default determination as attributes to the command where the event is computed
       //TODO expose `make` further down?
       var entity = _.reduce(function(memo, key){
-          var fld = IKind.field(memo, key);
+          var fld = ont.fld(memo, key);
           return _.maybe(_.get(fld, "defaults"), function(defaults){
-            return IField.aset(fld, memo, defaults);
+            return ont.aset(fld, memo, defaults);
           }) || memo;
         }, ITiddler.title(added, title), _.keys(added));
 
@@ -1648,7 +1531,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
 
       _.swap(self.buffer, function(buffer){
         return IBuffer.edit(buffer, _.mapa(function(id){
-          return assert(_.get(buffer, id), key, value);
+          return ont.assert(_.get(buffer, id), key, value);
         }, id));
       });
 
@@ -1675,7 +1558,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
           entity = _.get(self.buffer, id);
       if (entity) {
         var key = _.get(command, "key");
-        if (_.get(IKind.field(entity, key), self.key)) {
+        if (_.get(ont.fld(entity, key), self.key)) {
           throw new Error("Field `" + key + "` is " + self.key + " and thus cannot " + _.identifier(command) + ".");
         }
         IMiddleware.handle(self.handler, command, next);
@@ -1754,7 +1637,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
       _.swap(self.buffer, function(buffer){
         return IBuffer.edit(buffer, _.mapa(function(id){
           var entity = _.get(buffer, id);
-          return _.isSome(value) ? retract(entity, key, value) : retract(entity, key);
+          return _.isSome(value) ? ont.retract(entity, key, value) : ont.retract(entity, key);
         }, id));
       });
 
@@ -2366,10 +2249,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
       questions: questions,
       assertion: assertion,
       entityWorkspace: entityWorkspace,
-      domain: domain,
-      assert: assert,
-      retract: retract,
-      asserts: asserts
+      domain: domain
     }), _.impart(_, _.partly));
 
 });
