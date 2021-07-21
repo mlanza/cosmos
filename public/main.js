@@ -79,10 +79,6 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     serialize: null
   });
 
-  var IFactory = _.protocol({
-    make: null
-  });
-
   var ITransaction = _.protocol({
     commands: null //returns one or more commands that when executed effect the transaction in its entirety
   });
@@ -117,7 +113,6 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     IResolver: IResolver,
     ITiddler: ITiddler,
     IQueryable: IQueryable,
-    IFactory: IFactory,
     IPersistable: IPersistable,
     IOriginated: IOriginated,
     ITransaction: ITransaction,
@@ -290,7 +285,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     }
 
     function make(self, attrs){
-      return IFactory.make(_.get(self.ontology, attrs.$type), attrs);
+      return ont.make(_.get(self.ontology, attrs.$type), attrs);
     }
 
     function commit(self, workspace){
@@ -307,72 +302,11 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
       });
     }
     _.doto(JsonResource,
-      _.implement(IFactory, {make: make}),
+      _.implement(ont.IMaker, {make: make}),
       _.implement(IRepository, {commit: commit}),
       _.implement(IQueryable, {query: query}));
 
   })();
-
-  var Topic = (function(){
-
-    function Topic(type, attrs, schema){
-      this.type = type;
-      this.attrs = attrs;
-      this.schema = schema;
-    }
-
-    function lookup(self, key){
-      return _.get(self.attrs, key);
-    }
-
-    function assoc(self, key, value){
-      return new Topic(self.type, _.assoc(self.attrs, key, value), self.schema, self.resource);
-    }
-
-    function contains(self, key){
-      return _.contains(self.attrs, key);
-    }
-
-    function make(self, attrs){
-      return new self.type(self, attrs);
-    }
-
-    function name(self){
-      return _.get(self, "label");
-    }
-
-    function identifier(self){
-      return _.get(self, "key");
-    }
-
-    function fld(self, key){
-      return _.get(self.schema, key);
-    }
-
-    function keys(self){
-      return _.keys(self.schema);
-    }
-
-    return _.doto(Topic,
-      _.implement(ILookup, {lookup: lookup}),
-      _.implement(IAssociative, {assoc: assoc, contains: contains}),
-      _.implement(ont.IKind, {fld: fld}),
-      _.implement(INamable, {name: name}),
-      _.implement(_.IIdentifiable, {identifier: identifier}),
-      _.implement(IMap, {keys: keys}),
-      _.implement(IFactory, {make: make}));
-
-  })();
-
-  function topic3(type, key, schema){
-    return topic4(type, type.name, key, schema);
-  }
-
-  function topic4(type, label, key, schema){
-    return new Topic(type, {label: label, key: key}, schema);
-  }
-
-  var topic = _.overload(null, null, null, topic3, topic4);
 
   function tiddlerBehavior(title, text){
 
@@ -447,13 +381,13 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
   var toLocaleString = _.invokes(_, "toLocaleString");
 
   var tiddler =
-    topic(Tiddler,
+    ont.topic(Tiddler,
       "tiddler",
       _.conj(defaults,
         _.assoc(ont.computedField("flags", [typed]), "label", "Flags")));
 
   var task =
-    topic(Task,
+    ont.topic(Task,
       "task",
       _.conj(defaults,
         _.assoc(ont.field("priority", vd.constrain(ont.optional, vd.collOf(vd.choice([1, 2, 3])))), "label", "Priority"),
@@ -491,7 +425,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     }
 
     function make(self, attrs){
-      return IFactory.make(_.get(self.repos, _.get(attrs, "$type")) || _.just(self.repos, _.keys, _.first, _.get(self.repos, _)), _.dissoc(attrs, "$type"));
+      return ont.make(_.get(self.repos, _.get(attrs, "$type")) || _.just(self.repos, _.keys, _.first, _.get(self.repos, _)), _.dissoc(attrs, "$type"));
     }
 
     function conj(self, repo){
@@ -506,7 +440,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
       _.implement(ICollection, {conj: conj}),
       _.implement(IEmptyableCollection, {empty: _.constantly(domain())}),
       _.implement(IOriginated, {origin: origin}),
-      _.implement(IFactory, {make: make}),
+      _.implement(ont.IMaker, {make: make}),
       _.implement(IQueryable, {query: query}));
 
   })();
@@ -1117,7 +1051,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
           type = _.getIn(event, ["args", 0]),
           title = _.getIn(event, ["args", 1]);
 
-      var added = IFactory.make(self.buffer, {id: _.str(id), $type: type});
+      var added = ont.make(self.buffer, {id: _.str(id), $type: type});
       //TODO move default determination as attributes to the command where the event is computed
       //TODO expose `make` further down?
       var entity = _.reduce(function(memo, key){
@@ -1232,7 +1166,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
           id = _.get(command, "id"),
           type = _.getIn(command, ["args", 0]);
       if (prior) {
-        var entity = IFactory.make(self.buffer, Object.assign({}, prior.attrs, {$type: type})),
+        var entity = ont.make(self.buffer, Object.assign({}, prior.attrs, {$type: type})),
             title  = ITiddler.title(prior),
             text   = ITiddler.text(prior);
         if (title){
@@ -1917,7 +1851,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
   (function(){
 
     function make(self, attrs){
-      return IFactory.make(self.repo, attrs);
+      return ont.make(self.repo, attrs);
     }
 
     function edit(self, entities){
@@ -1952,7 +1886,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
       _.forward("workspace", ISwap, IRevertible, IReduce),
       _.implement(IAssociative, {contains: contains}),
       _.implement(IPersistable, {save: save}),
-      _.implement(IFactory, {make: make}),
+      _.implement(ont.IMaker, {make: make}),
       _.implement(ILookup, {lookup: lookup}),
       _.implement(IBuffer, {load: load, edit: edit}), //TODO ITransientBuffer.load
       _.implement(IQueryable, {query: query}));
