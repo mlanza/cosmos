@@ -58,11 +58,6 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     origin: null
   });
 
-  var ICaster = _.protocol({
-    cast: null,
-    uncast: null
-  });
-
   var IPersistable = _.protocol({
     save: null
   });
@@ -131,7 +126,6 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
   });
 
   var protocols = {
-    ICaster: ICaster,
     IIdentifiable: IIdentifiable,
     ISerializable: ISerializable,
     IKind: IKind,
@@ -273,7 +267,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     }
 
     function field(self, key){
-      return IKind.field(self.topic, key) || _.assoc(_.isArray(_.get(self.attrs, key)) ? _field(key, unlimited, valuesCaster) : _field(key, ont.optional, valueCaster), "missing", true);
+      return IKind.field(self.topic, key) || _.assoc(_.isArray(_.get(self.attrs, key)) ? _field(key, unlimited, ont.valuesCaster) : _field(key, ont.optional, ont.valueCaster), "missing", true);
     }
 
     function kind(self){ //TODO use?
@@ -328,71 +322,6 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     }, imm.distinct(_.concat(_.keys(self.attrs), _.keys(other.attrs))));
   }
 
-  function ValueCaster(emptyColl){
-    this.emptyColl = emptyColl;
-  }
-
-  var valueCaster = _.constructs(ValueCaster);
-
-  (function(){
-
-    function cast(self, value){
-      return _.into(self.emptyColl, _.maybe(value, _.array));
-    }
-
-    function uncast(self, coll){
-      return _.last(coll);
-    }
-
-    _.doto(ValueCaster,
-      _.implement(ICaster, {cast: cast, uncast: uncast}));
-
-  })();
-
-  function ValuesCaster(emptyColl){
-    this.emptyColl = emptyColl;
-  }
-
-  var valuesCaster = _.constructs(ValuesCaster);
-
-  (function(){
-
-    function cast(self, values){
-      return _.into(self.emptyColl, values);
-    }
-
-    function uncast(self, coll){
-      return _.deref(coll);
-    }
-
-    _.doto(ValuesCaster,
-      _.implement(ICaster, {cast: cast, uncast: uncast}));
-
-  })();
-
-  function Recaster(cast, uncast, caster){
-    this.cast = cast;
-    this.uncast = uncast;
-    this.caster = caster;
-  }
-
-  var recaster = _.constructs(Recaster);
-
-  (function(){
-
-    function cast(self, values){
-      return _.fmap(ICaster.cast(self.caster, values), self.cast);
-    }
-
-    function uncast(self, coll){
-      return ICaster.uncast(self.caster, _.fmap(coll, self.uncast));
-    }
-
-    _.doto(Recaster,
-      _.implement(ICaster, {cast: cast, uncast: uncast}));
-
-  })();
-
   var Field = (function(){
 
     function Field(attrs, caster){
@@ -415,13 +344,13 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     function aget(self, entity){
       var key = _.get(self, "key");
       return _.just(entity.attrs, _.get(_, key), function(value){
-        return ICaster.cast(self.caster, value);
+        return ont.cast(self.caster, value);
       });
     }
 
     function aset(self, entity, values){
       var key =  _.get(self, "key"),
-          value = ICaster.uncast(self.caster, values);
+          value = ont.uncast(self.caster, values);
       return new entity.constructor(entity.topic, _.isSome(value) ? _.assoc(entity.attrs, key, value) : _.dissoc(entity.attrs, self.key));
     }
 
@@ -430,7 +359,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     }
 
     function constraints(self){
-      return IConstrainable.constraints(ICaster.cast(self.caster, null));
+      return IConstrainable.constraints(ont.cast(self.caster, null));
     }
 
     return _.doto(Field,
@@ -447,7 +376,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
   }
 
   function field2(key, emptyColl){
-    return field3(key, emptyColl, valueCaster);
+    return field3(key, emptyColl, ont.valueCaster);
   }
 
   function field1(key){
@@ -732,16 +661,16 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
 
   var defaults = _.conj(schema(),
     _.assoc(field("id", entity, function(coll){
-      return recaster(_.guid, _.str, valueCaster(coll));
+      return ont.recaster(_.guid, _.str, ont.valueCaster(coll));
     }), "label", "ID"),
     _.assoc(field("title", ont.required), "label", "Title"),
     _.assoc(field("text", ont.optional), "label", "Text"),
     _.assoc(field("child", ont.resolvingCollection(vd.and(vd.unlimited, vd.collOf(vd.isa(Task, Tiddler))), entities), function(coll){
-      return recaster(_.guid, _.identity, valuesCaster(coll));
+      return ont.recaster(_.guid, _.identity, ont.valuesCaster(coll));
     }), "label", "Child"),
-    _.assoc(field("tag", unlimited, valuesCaster), "label", "Tag", "appendonly", true),
+    _.assoc(field("tag", unlimited, ont.valuesCaster), "label", "Tag", "appendonly", true),
     _.assoc(field("modified", vd.constrain(ont.optional, vd.collOf(_.isDate)), function(coll){
-      return recaster(_.date, toLocaleString, valueCaster(coll));
+      return ont.recaster(_.date, toLocaleString, ont.valueCaster(coll));
     }), "label", "Modified Date"));
 
   function typed(entity){
@@ -776,7 +705,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
       _.conj(defaults,
         _.assoc(field("priority", vd.constrain(ont.optional, vd.collOf(vd.choice([1, 2, 3])))), "label", "Priority"),
         _.assoc(field("due", vd.constrain(ont.optional, vd.collOf(_.isDate)), function(coll){
-          return recaster(_.date, toLocaleString, valueCaster(coll));
+          return ont.recaster(_.date, toLocaleString, ont.valueCaster(coll));
         }), "label", "Due Date"),
         _.assoc(computedField("overdue", [isOverdue]), "label", "Overdue"),
         _.assoc(computedField("flags", [typed, flag("overdue", isOverdue), flag("important", isImportant)]), "label", "Flags"),
