@@ -792,6 +792,14 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
       throw new Error("Protocol not specified.");
     }
 
+    if (!behavior) {
+      throw new Error("Behavior not specified.");
+    }
+
+    if (!target) {
+      throw new Error("Subject not specified.");
+    }
+
     var keys = this.generate();
     addMeta(target, keys("__marker__"), this);
 
@@ -1072,6 +1080,11 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     nextSiblings: null,
     prevSibling: null,
     prevSiblings: null
+  });
+
+  var IIdentifiable = protocol({
+    identifier: null //machine-friendly name (lowercase, no embedded spaces) offering reasonable uniqueness within a context
+
   });
 
   var IInclusive = protocol({
@@ -6576,6 +6589,8 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
 
   var handles = IHandler.handles;
 
+  var identifier = IIdentifiable.identifier;
+
   function afterN(self) {
     var ref = self;
 
@@ -6773,6 +6788,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     siblings: siblings$2,
     leaves: leaves,
     asLeaves: asLeaves,
+    identifier: identifier,
     nth: nth$6,
     idx: idx$3,
     includes: includes$9,
@@ -7272,6 +7288,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   exports.IFunctor = IFunctor;
   exports.IHandler = IHandler;
   exports.IHierarchy = IHierarchy;
+  exports.IIdentifiable = IIdentifiable;
   exports.IInclusive = IInclusive;
   exports.IIndexed = IIndexed;
   exports.IInsertable = IInsertable;
@@ -7492,6 +7509,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   exports.hour = hour;
   exports.hours = hours;
   exports.iarray = iarray;
+  exports.identifier = identifier;
   exports.identity = identity;
   exports.idx = idx$3;
   exports.impart = impart;
