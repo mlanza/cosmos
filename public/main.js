@@ -66,10 +66,6 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     commit: null
   });
 
-  var IIdentifiable = _.protocol({
-    identifier: null //machine-friendly identifier (lowercase, no embedded spaces) offering reasonable uniqueness within a context
-  });
-
   var ITiddler = _.protocol({
     title: null,
     text: null
@@ -126,7 +122,6 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
   });
 
   var protocols = {
-    IIdentifiable: IIdentifiable,
     ISerializable: ISerializable,
     IKind: IKind,
     IField: IField,
@@ -271,7 +266,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     }
 
     function kind(self){ //TODO use?
-      return IIdentifiable.identifier(self.topic);
+      return _.identifier(self.topic);
     }
 
     function lookup(self, key){
@@ -366,7 +361,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
       _.implement(ILookup, {lookup: lookup}),
       _.implement(IAssociative, {contains: contains, assoc: assoc}),
       _.implement(IConstrainable, {constraints: constraints}),
-      _.implement(IIdentifiable, {identifier: identifier}),
+      _.implement(_.IIdentifiable, {identifier: identifier}),
       _.implement(IField, {aget: aget, aset: aset}));
 
   })();
@@ -422,7 +417,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
       _.implement(ILookup, {lookup: lookup}),
       _.implement(IAssociative, {contains: contains, assoc: assoc}),
       _.implement(IConstrainable, {constraints: constraints}),
-      _.implement(IIdentifiable, {identifier: identifier}),
+      _.implement(_.IIdentifiable, {identifier: identifier}),
       _.implement(IField, {aget: aget}));
 
   })();
@@ -438,7 +433,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
   (function(){
 
     function conj(self, field){
-      return new self.constructor(_.assoc(self.fields, IIdentifiable.identifier(field), field));
+      return new self.constructor(_.assoc(self.fields, _.identifier(field), field));
     }
 
     function lookup(self, key){
@@ -478,7 +473,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
   (function(){
 
     function conj(self, topic){
-      return new self.constructor(_.assoc(self.topics, IIdentifiable.identifier(topic), topic));
+      return new self.constructor(_.assoc(self.topics, _.identifier(topic), topic));
     }
 
     function lookup(self, key){
@@ -605,7 +600,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
       _.implement(IAssociative, {assoc: assoc, contains: contains}),
       _.implement(IKind, {field: field}),
       _.implement(INamable, {name: name}),
-      _.implement(IIdentifiable, {identifier: identifier}),
+      _.implement(_.IIdentifiable, {identifier: identifier}),
       _.implement(IMap, {keys: keys}),
       _.implement(IFactory, {make: make}));
 
@@ -674,7 +669,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     }), "label", "Modified Date"));
 
   function typed(entity){
-    return IIdentifiable.identifier(entity.topic);
+    return _.identifier(entity.topic);
   }
 
   function flag(name, pred){
@@ -742,7 +737,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     }
 
     function conj(self, repo){
-      return new Domain(_.assoc(self.repos, IIdentifiable.identifier(repo), repo));
+      return new Domain(_.assoc(self.repos, _.identifier(repo), repo));
     }
 
     function resolve(self, refs){ //TODO implement
@@ -1070,7 +1065,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     return _.doto(Type,
       _.record,
       _.implement(IHash, {hash: hash}),
-      _.implement(IIdentifiable, {identifier: identifier}));
+      _.implement(_.IIdentifiable, {identifier: identifier}));
 
   }
 
@@ -1681,7 +1676,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
       if (entity) {
         var key = _.get(command, "key");
         if (_.get(IKind.field(entity, key), self.key)) {
-          throw new Error("Field `" + key + "` is " + self.key + " and thus cannot " + IIdentifiable.identifier(command) + ".");
+          throw new Error("Field `" + key + "` is " + self.key + " and thus cannot " + _.identifier(command) + ".");
         }
         IMiddleware.handle(self.handler, command, next);
       }
@@ -2124,7 +2119,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
   }
 
   function handlerMiddleware1(handlers){
-    return handlerMiddleware2(handlers, IIdentifiable.identifier);
+    return handlerMiddleware2(handlers, _.identifier);
   }
 
   function handlerMiddleware0(){
@@ -2228,7 +2223,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
         eventBus = bus(),
         emitter = $.subject();
 
-    var entityDriven = _.comp(_.includes(["assert", "retract", "toggle", "destroy", "cast", "tag", "untag", "select", "deselect"], _), IIdentifiable.identifier);
+    var entityDriven = _.comp(_.includes(["assert", "retract", "toggle", "destroy", "cast", "tag", "untag", "select", "deselect"], _), _.identifier);
 
     _.doto(commandBus,
       mut.conj(_,
