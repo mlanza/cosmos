@@ -130,6 +130,9 @@ define('jquery', ["vendor/jquery"], function(){
 define('cosmos/ontology', ["atomic/core", "vendor/cosmos/ontology"], function(_, ont){
   return _.impart(ont, _.partly);
 });
+define('cosmos/shell', ["atomic/core", "vendor/cosmos/shell"], function(_, sh){
+  return _.impart(sh, _.partly);
+});
 define('cmd/imports', function(){
   return {
     "_": "atomic/core",
