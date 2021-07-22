@@ -136,6 +136,9 @@ define('cosmos/shell', ["atomic/core", "vendor/cosmos/shell"], function(_, sh){
 define('cosmos/work', ["atomic/core", "vendor/cosmos/work"], function(_, w){
   return _.impart(w, _.partly);
 });
+define('cosmos/tiddology', ["atomic/core", "vendor/cosmos/tiddology"], function(_, w){
+  return _.impart(w, _.partly);
+});
 define('cmd/imports', function(){
   return {
     "_": "atomic/core",
@@ -150,7 +153,8 @@ define('cmd/imports', function(){
     "repos": "atomic/repos",
     "ont": "cosmos/ontology",
     "sh": "cosmos/shell",
-    "w": "cosmos/work"
+    "w": "cosmos/work",
+    "tidd": "cosmos/tiddology"
   }
 });
 define('cmd', ["atomic/core", "cmd/imports", "promise"], function(_, defaults, Promise){

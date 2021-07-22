@@ -1,4 +1,4 @@
-define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/transients', 'atomic/reactives', 'atomic/validates', 'atomic/immutables', 'atomic/repos', 'cosmos/ontology', 'cosmos/shell', 'cosmos/work', 'context'], function(fetch, _, dom, t, mut, $, vd, imm, repos, ont, sh, w, context){
+define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/transients', 'atomic/reactives', 'atomic/validates', 'atomic/immutables', 'atomic/repos', 'cosmos/ontology', 'cosmos/shell', 'cosmos/work', 'cosmos/tiddology', 'context'], function(fetch, _, dom, t, mut, $, vd, imm, repos, ont, sh, w, tidd, context){
 
   //TODO Apply effects (destruction, modification, addition) to datastore.
   //TODO Improve efficiency (with an index decorator?) of looking up an entity in a buffer by pk rather than guid.
@@ -43,17 +43,11 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     origin: null
   });
 
-  var ITiddler = _.protocol({
-    title: null,
-    text: null
-  });
-
   var IView = _.protocol({ //TODO rename to mount
     render: null
   });
 
   var protocols = {
-    ITiddler: ITiddler,
     IOriginated: IOriginated,
     IView: IView
   }
@@ -113,98 +107,6 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
 
   })();
 
-  function tiddlerBehavior(title, text){
-
-    function accessor(key){
-
-      function read(self){
-        return _.just(self, _.get(_, key), _.first);
-      }
-
-      function write(self, text){
-        return ont.assert(self, key, text);
-      }
-
-      return _.overload(null, read, write);
-    }
-
-    return _.does(
-      _.implement(ITiddler, {title: accessor(title), text: accessor(text)}));
-
-  }
-
-  function Tiddler(topic, attrs){
-    this.topic = topic;
-    this.attrs = attrs;
-  }
-
-  _.doto(Tiddler,
-    w.ientity,
-    tiddlerBehavior("title", "text"));
-
-  function Task(topic, attrs){
-    this.topic = topic;
-    this.attrs = attrs;
-  }
-
-  _.doto(Task,
-    w.ientity,
-    tiddlerBehavior("title", "text"));
-
-  var defaults = _.conj(ont.schema(),
-    _.assoc(ont.field("id", ont.entity, function(coll){
-      return ont.recaster(_.guid, _.str, ont.valueCaster(coll));
-    }), "label", "ID"),
-    _.assoc(ont.field("title", ont.required), "label", "Title"),
-    _.assoc(ont.field("text", ont.optional), "label", "Text"),
-    _.assoc(ont.field("child", ont.resolvingCollection(vd.and(vd.unlimited, vd.collOf(vd.isa(Task, Tiddler))), ont.entities), function(coll){
-      return ont.recaster(_.guid, _.identity, ont.valuesCaster(coll));
-    }), "label", "Child"),
-    _.assoc(ont.field("tag", ont.unlimited, ont.valuesCaster), "label", "Tag", "appendonly", true),
-    _.assoc(ont.field("modified", vd.constrain(ont.optional, vd.collOf(_.isDate)), function(coll){
-      return ont.recaster(_.date, toLocaleString, ont.valueCaster(coll));
-    }), "label", "Modified Date"));
-
-  function typed(entity){
-    return _.identifier(entity.topic);
-  }
-
-  function flag(name, pred){
-    return function(entity){
-      return pred(entity) ? name : null;
-    }
-  }
-
-  function isOverdue(entity){
-    return _.maybe(entity, _.get(_, "due"), _.first, _.gt(new Date(), _)); //impure
-  }
-
-  function isImportant(entity){
-    return _.maybe(entity, _.get(_, "priority"), _.detect(_.eq(_, 1), _));
-  }
-
-  var toLocaleString = _.invokes(_, "toLocaleString");
-
-  var tiddler =
-    ont.topic(Tiddler,
-      "tiddler",
-      _.conj(defaults,
-        _.assoc(ont.computedField("flags", [typed]), "label", "Flags")));
-
-  var task =
-    ont.topic(Task,
-      "task",
-      _.conj(defaults,
-        _.assoc(ont.field("priority", vd.constrain(ont.optional, vd.collOf(vd.choice([1, 2, 3])))), "label", "Priority"),
-        _.assoc(ont.field("due", vd.constrain(ont.optional, vd.collOf(_.isDate)), function(coll){
-          return ont.recaster(_.date, toLocaleString, ont.valueCaster(coll));
-        }), "label", "Due Date"),
-        _.assoc(ont.computedField("overdue", [isOverdue]), "label", "Overdue"),
-        _.assoc(ont.computedField("flags", [typed, flag("overdue", isOverdue), flag("important", isImportant)]), "label", "Flags"),
-        _.assoc(ont.field("assignee", ont.entities), "label", "Assignee"),
-        _.assoc(ont.field("expanded", vd.constrain(ont.required, vd.collOf(_.isBoolean))), "label", "Expanded")));
-
-  var work = _.conj(ont.ontology(), tiddler, task);
 
   function Domain(repos){
     this.repos = repos;
@@ -528,7 +430,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
           return _.maybe(_.get(fld, "defaults"), function(defaults){
             return ont.aset(fld, memo, defaults);
           }) || memo;
-        }, ITiddler.title(added, title), _.keys(added));
+        }, tidd.title(added, title), _.keys(added));
 
       _.swap(self.buffer, function(buffer){
         return w.add(buffer, [entity]);
@@ -636,13 +538,13 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
           type = _.getIn(command, ["args", 0]);
       if (prior) {
         var entity = ont.make(self.buffer, Object.assign({}, prior.attrs, {$type: type})),
-            title  = ITiddler.title(prior),
-            text   = ITiddler.text(prior);
+            title  = tidd.title(prior),
+            text   = tidd.text(prior);
         if (title){
-          entity = ITiddler.title(entity, title);
+          entity = tidd.title(entity, title);
         }
         if (text){
-          entity = ITiddler.text(entity, text);
+          entity = tidd.text(entity, text);
         }
         _.swap(self.buffer, function(buffer){
           return w.edit(buffer, [entity]);
@@ -1293,7 +1195,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
   var ol = _.doto(
     outline(
       w.buffer(
-        jsonResource("../data/outline.json", work),
+        jsonResource("../data/outline.json", tidd.tiddology),
         $.journal($.cell(w.indexedEntityWorkspace()))),
         {root: null}),
     $.sub(_,
