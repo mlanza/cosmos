@@ -4,7 +4,8 @@ import json  from '@rollup/plugin-json';
 
 export default {
   input: [
-    'src/ontology.js'
+    'src/ontology.js',
+    'src/shell.js'
   ],
   output: {
     dir: 'public/assets/vendor/cosmos',
@@ -45,7 +46,8 @@ export default {
     "atomic/html",
     "atomic/svg",
     "atomic/dom",
-    "cosmos/ontology"
+    "cosmos/ontology",
+    "cosmos/shell"
   ],
   plugins: [
     resolve(),

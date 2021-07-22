@@ -1,5 +1,7 @@
 import * as _ from "atomic/core";
+import * as vd from "atomic/validates";
 import * as p from "./protocols/concrete.js";
+import * as T from "./types.js";
 export * from "./protocols.js";
 export * from "./protocols/concrete.js";
 export * from "./types.js";
@@ -44,3 +46,6 @@ function asserts1(self){
 }
 
 export const asserts = _.overload(null, asserts1, asserts2, asserts3);
+export const unlimited = T.constrainedCollection(vd.and(vd.unlimited));
+export const entities  = vd.constrain(unlimited, vd.collOf(vd.isa(_.GUID)));
+export const entity    = vd.constrain(T.required, vd.collOf(vd.isa(_.GUID)));

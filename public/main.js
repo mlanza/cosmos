@@ -1,4 +1,4 @@
-define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/transients', 'atomic/reactives', 'atomic/validates', 'atomic/immutables', 'atomic/repos', 'cosmos/ontology', 'context'], function(fetch, _, dom, t, mut, $, vd, imm, repos, ont, context){
+define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/transients', 'atomic/reactives', 'atomic/validates', 'atomic/immutables', 'atomic/repos', 'cosmos/ontology', 'cosmos/shell', 'context'], function(fetch, _, dom, t, mut, $, vd, imm, repos, ont, sh, context){
 
   //TODO Apply effects (destruction, modification, addition) to datastore.
   //TODO Improve efficiency (with an index decorator?) of looking up an entity in a buffer by pk rather than guid.
@@ -121,10 +121,6 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     IBuffer: IBuffer
   }
 
-  var unlimited = ont.constrainedCollection(vd.and(vd.unlimited));
-      entities  = vd.constrain(unlimited, vd.collOf(vd.isa(_.GUID)));
-      entity    = vd.constrain(ont.required, vd.collOf(vd.isa(_.GUID)));
-
   function Assertion(attrs){
     this.attrs = attrs;
   }
@@ -205,7 +201,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
 
     function fld(self, key){
       return ont.fld(self.topic, key) || _.assoc(_.isArray(_.get(self.attrs, key))
-        ? ont.field(key, unlimited, ont.valuesCaster)
+        ? ont.field(key, ont.unlimited, ont.valuesCaster)
         : ont.field(key, ont.optional, ont.valueCaster), "missing", true);
     }
 
@@ -349,15 +345,15 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     tiddlerBehavior("title", "text"));
 
   var defaults = _.conj(ont.schema(),
-    _.assoc(ont.field("id", entity, function(coll){
+    _.assoc(ont.field("id", ont.entity, function(coll){
       return ont.recaster(_.guid, _.str, ont.valueCaster(coll));
     }), "label", "ID"),
     _.assoc(ont.field("title", ont.required), "label", "Title"),
     _.assoc(ont.field("text", ont.optional), "label", "Text"),
-    _.assoc(ont.field("child", ont.resolvingCollection(vd.and(vd.unlimited, vd.collOf(vd.isa(Task, Tiddler))), entities), function(coll){
+    _.assoc(ont.field("child", ont.resolvingCollection(vd.and(vd.unlimited, vd.collOf(vd.isa(Task, Tiddler))), ont.entities), function(coll){
       return ont.recaster(_.guid, _.identity, ont.valuesCaster(coll));
     }), "label", "Child"),
-    _.assoc(ont.field("tag", unlimited, ont.valuesCaster), "label", "Tag", "appendonly", true),
+    _.assoc(ont.field("tag", ont.unlimited, ont.valuesCaster), "label", "Tag", "appendonly", true),
     _.assoc(ont.field("modified", vd.constrain(ont.optional, vd.collOf(_.isDate)), function(coll){
       return ont.recaster(_.date, toLocaleString, ont.valueCaster(coll));
     }), "label", "Modified Date"));
@@ -398,7 +394,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
         }), "label", "Due Date"),
         _.assoc(ont.computedField("overdue", [isOverdue]), "label", "Overdue"),
         _.assoc(ont.computedField("flags", [typed, flag("overdue", isOverdue), flag("important", isImportant)]), "label", "Flags"),
-        _.assoc(ont.field("assignee", entities), "label", "Assignee"),
+        _.assoc(ont.field("assignee", ont.entities), "label", "Assignee"),
         _.assoc(ont.field("expanded", vd.constrain(ont.required, vd.collOf(_.isBoolean))), "label", "Expanded")));
 
   var work = _.conj(ont.ontology(), tiddler, task);
@@ -695,95 +691,8 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
   _.doto(_.Nil,
     _.implement(ITransaction, {commands: _.constantly(null)}));
 
-  function Bus(middlewares){
-    this.middlewares = middlewares;
-  }
-
-  function bus(middlewares){
-    return new Bus(middlewares || []);
-  }
-
-  (function(){
-
-    function conj(self, middleware){
-      self.middlewares = _.conj(self.middlewares, middleware);
-    }
-
-    function handle(self, message, next){
-      var f = _.reduce(function(memo, middleware){
-        return $.handle(middleware, _, memo);
-      }, next || _.noop, _.reverse(self.middlewares));
-      f(message);
-    }
-
-    function dispatch(self, message){
-      handle(self, message);
-    }
-
-    return _.doto(Bus,
-      _.implement(ITransientCollection, {conj: conj}),
-      _.implement(IDispatch, {dispatch: dispatch}),
-      _.implement(IMiddleware, {handle: handle}));
-
-  })();
-
-  function Command(type, attrs){
-    this.type = type;
-    this.attrs = attrs;
-  }
-
-  function Event(type, attrs){
-    this.type = type;
-    this.attrs = attrs;
-  }
-
-  var alter = _.partly(function alter(message, type){
-    return Object.assign(_.clone(message), {type: type});
-  });
-
-  var effect = _.partly(function effect(message, type){
-    var e = new Event();
-    return Object.assign(e, message, {type: type});
-  });
-
-  function messageBehavior(Type){
-
-    function hash(self){
-      return imm.hash({type: self.type, attrs: self.attrs});
-    }
-
-    function identifier(self){
-      return self.type;
-    }
-
-    return _.doto(Type,
-      _.record,
-      _.implement(IHash, {hash: hash}),
-      _.implement(_.IIdentifiable, {identifier: identifier}));
-
-  }
-
-  _.each(messageBehavior, [Command, Event]);
-
-  function constructs(Type){
-    return function message(type){
-      return function(args, options){
-        return new Type(type, Object.assign({args: args || []}, options));
-      }
-    }
-  }
-
-  var command = constructs(Command),
-      event = constructs(Event);
-
-  function defs(construct, keys){
-    return _.reduce(function(memo, key){
-      return _.assoc(memo, key, construct(key));
-    }, {}, keys);
-  }
-
-  var c = defs(command, ["pipe", "find", "take", "skip", "last", "query", "load", "save", "cast", "toggle", "tag", "untag", "assert", "retract", "select", "deselect", "add", "destroy", "undo", "redo", "flush", "peek"]),
-      e = defs(event, ["found", "took", "skipped", "lasted", "queried", "loaded", "saved", "casted", "toggled", "tagged", "untagged", "asserted", "retracted", "selected", "deselected", "added", "destroyed", "undone", "redone", "flushed", "peeked"]);
+  var c = sh.defs(sh.command, ["pipe", "find", "take", "skip", "last", "query", "load", "save", "cast", "toggle", "tag", "untag", "assert", "retract", "select", "deselect", "add", "destroy", "undo", "redo", "flush", "peek"]),
+      e = sh.defs(sh.event, ["found", "took", "skipped", "lasted", "queried", "loaded", "saved", "casted", "toggled", "tagged", "untagged", "asserted", "retracted", "selected", "deselected", "added", "destroyed", "undone", "redone", "flushed", "peeked"]);
 
   function handleExisting(event){
     return function handle(self, command, next){
@@ -805,7 +714,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
   (function(){
 
     function handle(self, command, next){
-      $.raise(self.provider, effect(command, "found"));
+      $.raise(self.provider, sh.effect(command, "found"));
       next(command);
     }
 
@@ -857,7 +766,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
   (function(){
 
     function handle(self, command, next){
-      $.raise(self.provider, effect(command, "took"));
+      $.raise(self.provider, sh.effect(command, "took"));
       next(command);
     }
 
@@ -893,7 +802,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
   (function(){
 
     function handle(self, command, next){
-      $.raise(self.provider, effect(command, "skipped"));
+      $.raise(self.provider, sh.effect(command, "skipped"));
       next(command);
     }
 
@@ -929,7 +838,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
   (function(){
 
     function handle(self, command, next){
-      $.raise(self.provider, effect(command, "lasted"));
+      $.raise(self.provider, sh.effect(command, "lasted"));
       next(command);
     }
 
@@ -1015,7 +924,6 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
       _.implement(IMiddleware, {handle: handle}));
 
   })();
-
 
   function AddHandler(buffer, provider){
     this.buffer = buffer;
@@ -1124,7 +1032,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
   (function(){
 
     function handle(self, command, next){
-      var altered = _.just(command, alter(_, "assert"), _.update(_, "args", _.pipe(_.cons("tag", _), _.toArray)));
+      var altered = _.just(command, sh.alter(_, "assert"), _.update(_, "args", _.pipe(_.cons("tag", _), _.toArray)));
       $.handle(self.handler, altered, next);
       next(command);
     }
@@ -1143,7 +1051,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
   (function(){
 
     function handle(self, command, next){
-      var altered =  _.just(command, alter(_, "retract"), _.update(_, "args", _.pipe(_.cons("tag", _), _.toArray)));
+      var altered =  _.just(command, sh.alter(_, "retract"), _.update(_, "args", _.pipe(_.cons("tag", _), _.toArray)));
       $.handle(self.handler, altered, next);
       next(command);
     }
@@ -1555,7 +1463,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
   (function(){
 
     function handle(self, command, next){
-      $.raise(self.provider, effect(command, "deselected"));
+      $.raise(self.provider, sh.effect(command, "deselected"));
       next(command);
     }
 
@@ -1594,7 +1502,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
   (function(){
 
     function handle(self, command, next){
-      $.raise(self.provider, effect(command, "peeked"));
+      $.raise(self.provider, sh.effect(command, "peeked"));
       next(command);
     }
 
@@ -1617,43 +1525,6 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     }
 
     return _.doto(PeekedHandler,
-      _.implement(IMiddleware, {handle: handle}));
-
-  })();
-
-  function LockingMiddleware(bus, queued, handling){
-    this.bus = bus;
-    this.queued = queued;
-    this.handling = handling;
-  }
-
-  function lockingMiddleware(bus){
-    return new LockingMiddleware(bus, [], false);
-  }
-
-  (function(){
-
-    function handle(self, message, next){
-      next(message);
-    }
-
-    function handle(self, message, next){
-      if (self.handling) {
-        self.queued.push(message);
-      } else {
-        self.handling = true;
-        next(message);
-        self.handling = false;
-        if (self.queued.length) {
-          var queued = self.queued;
-          self.queued = [];
-          _.log("draining queued", queued);
-          _.each($.dispatch(self.bus, _), queued);
-        }
-      }
-    }
-
-    return _.doto(LockingMiddleware,
       _.implement(IMiddleware, {handle: handle}));
 
   })();
@@ -1743,106 +1614,6 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
 
   })();
 
-  function TeeMiddleware(effect){
-    this.effect = effect;
-  }
-
-  var teeMiddleware = _.constructs(TeeMiddleware);
-
-  (function(){
-
-    function handle(self, message, next){
-      self.effect(message);
-      next(message);
-    }
-
-    return _.doto(TeeMiddleware,
-      _.implement(IMiddleware, {handle: handle}));
-
-  })();
-
-  function DrainEventsMiddleware(provider, eventBus){
-    this.provider = provider;
-    this.eventBus = eventBus;
-  }
-
-  var drainEventsMiddleware = _.constructs(DrainEventsMiddleware);
-
-  (function(){
-
-    function handle(self, command, next){
-      next(command);
-      _.each(function(message){
-        IMiddleware.handle(self.eventBus, message, next);
-      }, $.release(self.provider));
-    }
-
-    return _.doto(DrainEventsMiddleware,
-      _.implement(IMiddleware, {handle: handle}));
-
-  })();
-
-  function EventMiddleware(emitter){
-    this.emitter = emitter;
-  }
-
-  var eventMiddleware = _.constructs(EventMiddleware);
-
-  (function(){
-
-    function handle(self, event, next){
-      $.pub(self.emitter, event);
-      next(event);
-    }
-
-    return _.doto(EventMiddleware,
-      _.implement(IMiddleware, {handle: handle}));
-
-  })()
-
-  function HandlerMiddleware(handlers, identify, fallback){
-    this.handlers = handlers;
-    this.identify = identify;
-    this.fallback = fallback;
-  }
-
-  var handlerMiddleware3 = _.constructs(HandlerMiddleware);
-
-  function handlerMiddleware2(handlers, identify){
-    return handlerMiddleware3(handlers, identify);
-  }
-
-  function handlerMiddleware1(handlers){
-    return handlerMiddleware2(handlers, _.identifier);
-  }
-
-  function handlerMiddleware0(){
-    return handlerMiddleware1({});
-  }
-
-  var handlerMiddleware = _.overload(handlerMiddleware0, handlerMiddleware1, handlerMiddleware2, handlerMiddleware3);
-
-  (function(){
-
-    function assoc(self, key, handler){
-      self.handlers = _.assoc(self.handlers, key, handler);
-    }
-
-    function handle(self, message, next){
-      var handler = _.get(self.handlers, self.identify(message), self.fallback);
-      if (handler){
-        $.handle(handler, message, next);
-      } else {
-        next(message);
-      }
-    }
-
-    return _.doto(HandlerMiddleware,
-      _.implement(ITransientAssociative, {assoc: assoc}),
-      _.implement(IMiddleware, {handle: handle}));
-
-  })();
-
   function Buffer(repo, workspace){
     this.repo = repo;
     this.workspace = workspace;
@@ -1913,20 +1684,20 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
           expanded: _.into(imm.set(), options.expanded || []) //track which entities are expanded vs collapsed
         }),
         events = $.events(),
-        commandBus = bus(),
-        eventBus = bus(),
+        commandBus = sh.bus(),
+        eventBus = sh.bus(),
         emitter = $.subject();
 
     var entityDriven = _.comp(_.includes(["assert", "retract", "toggle", "destroy", "cast", "tag", "untag", "select", "deselect"], _), _.identifier);
 
     _.doto(commandBus,
       mut.conj(_,
-        lockingMiddleware(commandBus),
+        sh.lockingMiddleware(commandBus),
         keyedMiddleware("command-id", _.generate(_.iterate(_.inc, 1))),
         findMiddleware(model, buffer, entityDriven),
         selectionMiddleware(model, entityDriven),
-        teeMiddleware(_.see("command")),
-        _.doto(handlerMiddleware(),
+        sh.teeMiddleware(_.see("command")),
+        _.doto(sh.handlerMiddleware(),
           mut.assoc(_, "pipe", pipeHandler(buffer, model, commandBus)),
           mut.assoc(_, "find", findHandler(events)),
           mut.assoc(_, "take", takeHandler(events)),
@@ -1949,7 +1720,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
           mut.assoc(_, "query", queryHandler(buffer, events)),
           mut.assoc(_, "select", selectHandler(buffer, events)),
           mut.assoc(_, "deselect", deselectHandler(model, events))),
-        drainEventsMiddleware(events, eventBus)));
+        sh.drainEventsMiddleware(events, eventBus)));
 
     function compose(key, f){
       _.just(model, _.swap(_, _.update(_, key, function(g){
@@ -1960,8 +1731,8 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     _.doto(eventBus,
       mut.conj(_,
         keyedMiddleware("event-id", _.generate(_.iterate(_.inc, 1))),
-        teeMiddleware(_.see("event")),
-        _.doto(handlerMiddleware(),
+        sh.teeMiddleware(_.see("event")),
+        _.doto(sh.handlerMiddleware(),
           mut.assoc(_, "peeked", peekedHandler(buffer, model)),
           mut.assoc(_, "found", foundHandler(_.partial(compose, "find"))),
           mut.assoc(_, "took", tookHandler(_.partial(compose, "find"))),
@@ -1980,7 +1751,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
           mut.assoc(_, "queried", queriedHandler(commandBus)),
           mut.assoc(_, "selected", selectedHandler(model)),
           mut.assoc(_, "deselected", deselectedHandler(model))),
-        eventMiddleware(emitter)));
+        sh.eventMiddleware(emitter)));
 
     return new Outline(buffer, model, commandBus, eventBus, emitter, options);
   }
@@ -2054,7 +1825,6 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
       ol: ol,
       c: c,
       e: e,
-      unlimited: unlimited,
       assertionStore: assertionStore,
       dirtyKeys: dirtyKeys,
       questions: questions,
