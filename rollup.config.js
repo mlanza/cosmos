@@ -5,7 +5,8 @@ import json  from '@rollup/plugin-json';
 export default {
   input: [
     'src/ontology.js',
-    'src/shell.js'
+    'src/shell.js',
+    'src/work.js'
   ],
   output: {
     dir: 'public/assets/vendor/cosmos',

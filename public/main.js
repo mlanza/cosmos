@@ -1,4 +1,4 @@
-define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/transients', 'atomic/reactives', 'atomic/validates', 'atomic/immutables', 'atomic/repos', 'cosmos/ontology', 'cosmos/shell', 'context'], function(fetch, _, dom, t, mut, $, vd, imm, repos, ont, sh, context){
+define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/transients', 'atomic/reactives', 'atomic/validates', 'atomic/immutables', 'atomic/repos', 'cosmos/ontology', 'cosmos/shell', 'cosmos/work', 'context'], function(fetch, _, dom, t, mut, $, vd, imm, repos, ont, sh, w, context){
 
   //TODO Apply effects (destruction, modification, addition) to datastore.
   //TODO Improve efficiency (with an index decorator?) of looking up an entity in a buffer by pk rather than guid.
@@ -26,7 +26,6 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
       IKVReduce = _.IKVReduce,
       IAppendable = _.IAppendable,
       IPrependable = _.IPrependable,
-      IQueryable = repos.IQueryable,
       INext = _.INext,
       ISeq = _.ISeq,
       IDeref = _.IDeref,
@@ -44,198 +43,20 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     origin: null
   });
 
-  var IPersistable = _.protocol({
-    save: null
-  });
-
-  var IRepository = _.protocol({
-    commit: null
-  });
-
   var ITiddler = _.protocol({
     title: null,
     text: null
-  });
-
-  var IResolver = _.protocol({
-    resolve: null //TODO returns both resolved and unresolved values
-  });
-
-  var ISerializable = _.protocol({
-    serialize: null
-  });
-
-  var ITransaction = _.protocol({
-    commands: null //returns one or more commands that when executed effect the transaction in its entirety
   });
 
   var IView = _.protocol({ //TODO rename to mount
     render: null
   });
 
-  var IVertex = _.protocol({
-    outs: null,
-    ins: null
-  });
-
-  var IBuffer = _.protocol({
-    touched: null, //entities touched during the last operation - useful when diffing before/after model snapshots
-    dirty: null, //was a given entity ever modified?
-    load: null, //add existing entity from domain to workspace
-    add: null, //add new entity to workspace
-    edit: null, //update entity present in workspace
-    destroy: null, //delete entity present in workspace
-    changes: null //changed entities
-  });
-
-  var IEntity = _.protocol({
-    id: null,
-    assertions: null
-  });
-
   var protocols = {
-    ISerializable: ISerializable,
-    IEntity: IEntity,
-    IResolver: IResolver,
     ITiddler: ITiddler,
-    IQueryable: IQueryable,
-    IPersistable: IPersistable,
     IOriginated: IOriginated,
-    ITransaction: ITransaction,
-    IView: IView,
-    IVertex: IVertex,
-    IBuffer: IBuffer
+    IView: IView
   }
-
-  function Assertion(attrs){
-    this.attrs = attrs;
-  }
-
-  function assertion(subject, predicate, object){
-    return new Assertion({subject: subject, predicate: predicate, object: object});
-  }
-
-  (function(){
-
-    _.doto(Assertion,
-      _.forward("attrs", IHash),
-      _.record);
-
-  })();
-
-  function AssertionStore(questions, assertions){
-    this.questions = questions;
-    this.assertions = assertions;
-  }
-
-  var assertionStore = _.fnil(_.constructs(AssertionStore), _.array, imm.map());
-
-  function questions(assertion){
-    return [
-      assertion,
-      _.assoc(assertion, "predicate", null, "object", null),
-      _.assoc(assertion, "predicate", null),
-      _.assoc(assertion, "subject", null),
-      _.assoc(assertion, "object", null)
-    ];
-  }
-
-  (function(){
-
-    function reviseStore(manner){
-      return function(self, assertion){
-        return assertionStore(self.questions, _.reduce(function(memo, question){
-          return _.update(memo, question, function(answers){
-            return manner(answers || imm.set(), assertion);
-          });
-        }, self.assertions, self.questions(assertion)));
-      }
-    }
-
-    function lookup(self, assertion){
-      return _.seq(_.get(self.assertions, assertion));
-    }
-
-    _.doto(AssertionStore,
-      _.implement(ICollection, {conj: reviseStore(_.conj)}),
-      _.implement(ISet, {disj: reviseStore(_.disj)}),
-      _.implement(ILookup, {lookup: lookup}));
-
-  })();
-
-  var ientity = (function(){
-
-    function assertions(self){
-      var id = IEntity.id(self);
-      return _.mapcat(function(key){
-        var fld = ont.fld(self, key);
-        return _.get(fld, "computed") ? [] : _.map(function(value){
-          return assertion(id, key, value);
-        }, _.get(self, key));
-      }, _.filter(_.notEq(_, "id"), _.keys(self))); //TODO identify pk with metadata
-    }
-
-    function outs(self){ //TODO improve efficiency by using only relational keys
-      return _.filter(function(assertion){
-        return _.is(assertion.object, _.GUID);
-      }, assertions(self));
-    }
-
-    function id(self){
-      return _.guid(self.attrs.id);
-    }
-
-    function fld(self, key){
-      return ont.fld(self.topic, key) || _.assoc(_.isArray(_.get(self.attrs, key))
-        ? ont.field(key, ont.unlimited, ont.valuesCaster)
-        : ont.field(key, ont.optional, ont.valueCaster), "missing", true);
-    }
-
-    function kind(self){ //TODO use?
-      return _.identifier(self.topic);
-    }
-
-    function lookup(self, key){
-      return ont.aget(fld(self, key), self);
-    }
-
-    function assoc(self, key, values){
-      return ont.aset(fld(self, key), self, values);
-    }
-
-    function contains(self, key){
-      return _.contains(self.attrs, key);
-    }
-
-    function dissoc(self, key){
-      return assoc(self, key, null); //TODO test
-    }
-
-    function keys(self){
-      return imm.distinct(_.concat(_.keys(self.topic), _.keys(self.attrs)));
-    }
-
-    function constraints(self){
-      return _.reduce(function(memo, key){
-        return _.append(memo, vd.optional(key, IConstrainable.constraints(fld(self, key))));
-      }, vd.and(), keys(self));
-    }
-
-    function serialize(self){
-      return self.attrs;
-    }
-
-    return _.does(
-      _.implement(ISerializable, {serialize: serialize}),
-      _.implement(IConstrainable, {constraints: constraints}),
-      _.implement(IEntity, {id: id, assertions: assertions}),
-      _.implement(IMap, {keys: keys, dissoc: dissoc}),
-      _.implement(IVertex, {outs: outs}),
-      _.implement(ILookup, {lookup: lookup}),
-      _.implement(IAssociative, {assoc: assoc, contains: contains}),
-      _.implement(ont.IKind, {fld: fld, kind: kind}));
-
-  })();
 
   function dirtyKeys(self, other){
     return self.attrs === other.attrs ? null : _.remove(function(key){
@@ -273,7 +94,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     }
 
     function commit(self, workspace){
-      var body = _.just(workspace, _.deref, _.mapa(ISerializable.serialize, _), function(items){
+      var body = _.just(workspace, _.deref, _.mapa(w.serialize, _), function(items){
         return JSON.stringify(items, null, "\t");
       });
       fetch(self.url, {
@@ -287,8 +108,8 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     }
     _.doto(JsonResource,
       _.implement(ont.IMaker, {make: make}),
-      _.implement(IRepository, {commit: commit}),
-      _.implement(IQueryable, {query: query}));
+      _.implement(w.IRepository, {commit: commit}),
+      _.implement(repos.IQueryable, {query: query}));
 
   })();
 
@@ -318,7 +139,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
   }
 
   _.doto(Tiddler,
-    ientity,
+    w.ientity,
     tiddlerBehavior("title", "text"));
 
   function Task(topic, attrs){
@@ -327,7 +148,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
   }
 
   _.doto(Task,
-    ientity,
+    w.ientity,
     tiddlerBehavior("title", "text"));
 
   var defaults = _.conj(ont.schema(),
@@ -405,7 +226,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     function query(self, options){
       var type = _.get(options, "$type"),
           plan = _.dissoc(options, "$type");
-      return IQueryable.query(_.get(self.repos, type), plan);
+      return repos.query(_.get(self.repos, type), plan);
     }
 
     function make(self, attrs){
@@ -420,262 +241,14 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     }
 
     _.doto(Domain,
-      _.implement(IResolver, {resolve: resolve}),
+      _.implement(w.IResolver, {resolve: resolve}),
       _.implement(ICollection, {conj: conj}),
       _.implement(IEmptyableCollection, {empty: _.constantly(domain())}),
       _.implement(IOriginated, {origin: origin}),
       _.implement(ont.IMaker, {make: make}),
-      _.implement(IQueryable, {query: query}));
+      _.implement(repos.IQueryable, {query: query}));
 
   })();
-
-  function Transaction(buffer, user){
-    this.buffer = buffer;
-    this.user = user;
-  }
-
-  var transaction = _.constructs(Transaction);
-
-  (function(){
-
-    function id(self){
-      return IEntity.id(self.buffer);
-    }
-
-    function commands(self){ //TODO serializable commands with sufficient data for later application
-      return ITransaction.commands(self.buffer); //TODO wrap each command with additional information (e.g. user, owning txn id)
-    }
-
-    _.doto(Transaction, //TODO some way of validating both the changed entities and the overall transaction
-      _.implement(IEntity, {id: id}),
-      _.implement(ITransaction, {commands: commands}));
-
-  })();
-
-  function Change(id, prior, current, op){
-    this.id = id;
-    this.prior = prior;
-    this.current = current;
-    this.op = op;
-  }
-
-  var change = _.constructs(Change);
-
-  function EntityWorkspace(loaded, changed, touched){
-    this.loaded = loaded;
-    this.changed = changed;
-    this.touched = touched;
-  }
-
-  (function(){
-
-    //TODO should `clone` return identity or a copy? i returned identity because I assumed no mutation.
-
-    function query(self, plan){
-      return _.filter(function(entity){
-        return _.matches(entity.attrs, plan); //TODO temporary
-      }, _.seq(self));
-    }
-
-    function load(self, entities){
-      return entityWorkspace(_.reduce(function(memo, entity){
-        var id = IEntity.id(entity);
-        return _.contains(memo, id) ? memo : _.assoc(memo, id, entity);
-      }, self.loaded, entities), self.changed, _.into(imm.set(), _.map(IEntity.id, entities)));
-    }
-
-    function add(self, entities){
-      return entityWorkspace(self.loaded, _.reduce(function(memo, entity){
-        var id = IEntity.id(entity);
-        return _.contains(memo, id) ? memo : _.assoc(memo, id, entity);
-      }, self.changed, entities), _.into(imm.set(), _.map(IEntity.id, entities)));
-    }
-
-    function edit(self, entities){
-      return entityWorkspace(self.loaded, _.reduce(function(memo, entity){
-        var id = IEntity.id(entity);
-        return _.contains(self.loaded, id) || _.contains(memo, id) ? _.assoc(memo, id, entity) : memo;
-      }, self.changed, entities), _.into(imm.set(), _.map(IEntity.id, entities)));
-    }
-
-    function destroy(self, entities){
-      return entityWorkspace(self.loaded, _.reduce(function(memo, entity){
-        var id = IEntity.id(entity);
-        return _.contains(self.loaded, id) ? _.assoc(memo, id, null) : _.contains(memo, id) ? _.dissoc(memo, id) : memo;
-      }, self.changed, entities), _.into(imm.set(), _.map(IEntity.id, entities)));
-    }
-
-    function dirty(self, entity){
-      return _.notEq(entity, _.get(self.loaded, IEntity.id(entity)));
-    }
-
-    function changes(self){
-      return _.count(_.keys(self.changed)) ? transaction(self, context.userId) : null;
-    }
-
-    function includes(self, entity){
-      return _.contains(self, IEntity.id(entity));
-    }
-
-    function first(self){
-      return _.first(vals(self));
-    }
-
-    function rest(self){
-      return _.rest(vals(self));
-    }
-
-    function next(self){
-      return _.seq(rest(self));
-    }
-
-    function seq(self){
-      return _.seq(_.keys(self)) ? self : null;
-    }
-
-    function lookup(self, id){
-      return _.contains(self.changed, id) ? _.get(self.changed, id) : _.get(self.loaded, id);
-    }
-
-    function reduce(self, f, init){
-      return _.reduce(f, init, _.map(_.get(self, _), _.keys(self)));
-    }
-
-    function dissoc(self, id){
-      return _.contains(self, id) ?
-        entityWorkspace(
-          _.contains(self.loaded, id) ? _.dissoc(self.loaded, id) : self.loaded,
-          _.contains(self.changed, id) ? _.dissoc(self.changed, id) : self.changed, _.cons(id)) : self;
-    }
-
-    function keys(self){
-      return _.filter(_.get(self, _),
-        imm.distinct(_.concat(Array.from(_.keys(self.loaded)), Array.from(_.keys(self.changed)))));
-    }
-
-    function vals(self){
-      return _.map(_.get(self, _), _.keys(self));
-    }
-
-    function count(self){
-      return _.count(keys(self));
-    }
-
-    function contains(self, id){
-      return !!_.get(self, id);
-    }
-
-    function id(self){
-      return self.id;
-    }
-
-    function commands(self){
-      return _.just(self.changed,
-        _.keys,
-        _.mapcat(function(id){
-          var prior   = _.get(self.loaded , id),
-              current = _.get(self.changed, id);
-          if (prior && current) {
-            if (_.eq(prior, current)) {
-              return [];
-            } else if (prior.constructor !== current.constructor) { //type changed
-              return [change(id, prior, null, 'destroy'), change(id, null, current, 'add')];
-            } else {
-              return [change(id, prior, current, 'modify')];
-            }
-          } else if (prior) {
-            return [change(id, prior, null, 'destroy')];
-          } else if (current) {
-            return [change(id, null, current, 'add')];
-          } else {
-            return [];
-          }
-        }, _));
-    }
-
-    function resolve(self, refs){
-      return _.mapa(function(ref){
-        return _.detect(function(entity){
-          return entity.attrs.Id === ref.value; //TODO inefficient non-indexed access
-        }, self);
-      }, refs);
-    }
-
-    function touched(self){
-      return self.touched;
-    }
-
-    function nth(self, idx){
-      return _.first(_.drop(idx, self));
-    }
-
-    _.doto(EntityWorkspace,
-      _.implement(IResolver, {resolve: resolve}),
-      _.implement(IIndexed, {nth: nth}),
-      _.implement(IEntity, {id: id}),
-      _.implement(IQueryable, {query: query}),
-      _.implement(ITransaction, {commands: commands}),
-      _.implement(IBuffer, {dirty: dirty, load: load, add: add, edit: edit, destroy: destroy, changes: changes, touched: touched}),
-      _.implement(ICounted, {count: count}),
-      _.implement(IAssociative, {contains: contains}),
-      _.implement(IMap, {keys: keys, vals: vals, dissoc: dissoc}),
-      _.implement(IReduce, {reduce: reduce}),
-      _.implement(ILookup, {lookup: lookup}),
-      _.implement(ISeq, {first: first, rest: rest}),
-      _.implement(INext, {next: next}),
-      _.implement(ISeqable, {seq: seq}),
-      _.implement(IInclusive, {includes: includes}),
-      _.implement(IEmptyableCollection, {empty: buffer}));
-
-  })();
-
-  var entityWorkspace = _.fnil(_.constructs(EntityWorkspace), imm.map(), imm.map(), imm.set());
-
-  function IndexedEntityWorkspace(indexes, workspace){
-    this.indexes = indexes;
-    this.workspace = workspace;
-  }
-
-  (function(){ // TODO implement indexing
-
-    function query(self, plan){
-      return IQueryable.query(self.workspace, plan);
-    }
-
-    function load(self, entities){
-      return new self.constructor(self.indexes, IBuffer.load(self.workspace, entities));
-    }
-
-    function add(self, entities){
-      var xs = _.mapcat(IEntity.assertions, entities);
-      return new self.constructor(self.indexes, IBuffer.add(self.workspace, entities));
-    }
-
-    function edit(self, entities){
-      return new self.constructor(self.indexes, IBuffer.edit(self.workspace, entities));
-    }
-
-    function destroy(self, entities){
-      return new self.constructor(self.indexes, IBuffer.destroy(self.workspace, entities));
-    }
-
-    function dissoc(self, id){
-      return new self.constructor(self.indexes, _.dissoc(self.workspace, id));
-    }
-
-    _.doto(IndexedEntityWorkspace,
-      _.forward("workspace", IMap, ISeq, INext, ISeqable, ILookup, IReduce, ICounted, IInclusive, IAssociative, IEntity, ITransaction, IResolver, IBuffer, IIndexed),
-      _.implement(IQueryable, {query: query}),
-      _.implement(IBuffer, {load: load, add: add, edit: edit, destroy: destroy}),
-      _.implement(IMap, {dissoc: dissoc}),
-      _.implement(IEmptyableCollection, {empty: buffer}));
-
-  })();
-
-  var indexedEntityWorkspace = _.fnil(_.constructs(IndexedEntityWorkspace), assertionStore(), entityWorkspace());
-
-  _.doto(_.Nil,
-    _.implement(ITransaction, {commands: _.constantly(null)}));
 
   var c = sh.defs(sh.command, ["pipe", "find", "take", "skip", "last", "query", "load", "save", "cast", "toggle", "tag", "untag", "assert", "retract", "select", "deselect", "add", "destroy", "undo", "redo", "flush", "peek"]),
       e = sh.defs(sh.event, ["found", "took", "skipped", "lasted", "queried", "loaded", "saved", "casted", "toggled", "tagged", "untagged", "asserted", "retracted", "selected", "deselected", "added", "destroyed", "undone", "redone", "flushed", "peeked"]);
@@ -902,7 +475,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
   (function(){
 
     function handle(self, event, next){
-      IBuffer.load(self.buffer, _.get(event, "args")); //TODO ITransientBuffer.load
+      w.load(self.buffer, _.get(event, "args")); //TODO ITransientBuffer.load
       next(event);
     }
 
@@ -958,7 +531,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
         }, ITiddler.title(added, title), _.keys(added));
 
       _.swap(self.buffer, function(buffer){
-        return IBuffer.add(buffer, [entity]);
+        return w.add(buffer, [entity]);
       });
 
       //TODO create middleware which clears selections after certain actions, remove `model`
@@ -998,7 +571,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
       var id = _.get(command, "id"),
           key = _.getIn(command, ["args", 0]);
       _.swap(self.buffer, function(buffer){
-        return IBuffer.edit(buffer, _.mapa(_.pipe(_.get(buffer, _), _.update(_, key, _.mapa(_.not, _))), id));
+        return w.edit(buffer, _.mapa(_.pipe(_.get(buffer, _), _.update(_, key, _.mapa(_.not, _))), id));
       });
       next(command);
     }
@@ -1072,7 +645,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
           entity = ITiddler.text(entity, text);
         }
         _.swap(self.buffer, function(buffer){
-          return IBuffer.edit(buffer, [entity]);
+          return w.edit(buffer, [entity]);
         });
         $.raise(self.provider, e.casted([id, type]));
       }
@@ -1094,7 +667,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
   (function (){
 
     function handle(self, command){
-      IPersistable.save(self.buffer)
+      w.save(self.buffer)
       $.raise(self.provider, e.saved());
     }
 
@@ -1235,7 +808,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
           id = _.get(event, "id");
 
       _.swap(self.buffer, function(buffer){
-        return IBuffer.edit(buffer, _.mapa(function(id){
+        return w.edit(buffer, _.mapa(function(id){
           return ont.assert(_.get(buffer, id), key, value);
         }, id));
       });
@@ -1301,7 +874,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     function handle(self, event, next){
       var id = _.get(event, "id");
       _.swap(self.buffer, function(buffer){
-        return IBuffer.destroy(buffer, _.mapa(_.get(buffer, _), id));
+        return w.destroy(buffer, _.mapa(_.get(buffer, _), id));
       });
 
       next(event);
@@ -1340,7 +913,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
           id = _.get(event, "id");
 
       _.swap(self.buffer, function(buffer){
-        return IBuffer.edit(buffer, _.mapa(function(id){
+        return w.edit(buffer, _.mapa(function(id){
           var entity = _.get(buffer, id);
           return _.isSome(value) ? ont.retract(entity, key, value) : ont.retract(entity, key);
         }, id));
@@ -1364,7 +937,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
   (function(){
 
     function handle(self, command, next){
-      return _.fmap(IQueryable.query(self.buffer, _.get(command, "plan")), function(entities){
+      return _.fmap(repos.query(self.buffer, _.get(command, "plan")), function(entities){
         $.raise(self.provider, e.queried(entities));
         next(command);
       });
@@ -1600,57 +1173,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
 
   })();
 
-  function Buffer(repo, workspace){
-    this.repo = repo;
-    this.workspace = workspace;
-  }
 
-  var buffer = _.constructs(Buffer);
-
-  (function(){
-
-    function make(self, attrs){
-      return ont.make(self.repo, attrs);
-    }
-
-    function edit(self, entities){
-      _.swap(self.workspace, function(workspace){
-        return IBuffer.edit(workspace, entities);
-      });
-    }
-
-    function lookup(self, id){
-      return _.just(self.workspace, _.deref, _.get(_, id));
-    }
-
-    function contains(self, id){
-      return _.just(self.workspace, _.deref, _.contains(_, id));
-    }
-
-    function load(self, entities){
-      _.swap(self.workspace, function(workspace){
-        return IBuffer.load(workspace, entities);
-      });
-    }
-
-    function query(self, plan){
-      return IQueryable.query(self.repo, plan);
-    }
-
-    function save(self){
-      return IRepository.commit(self.repo, self.workspace); //TODO return outcome status?
-    }
-
-    _.doto(Buffer,
-      _.forward("workspace", ISwap, IRevertible, IReduce),
-      _.implement(IAssociative, {contains: contains}),
-      _.implement(IPersistable, {save: save}),
-      _.implement(ont.IMaker, {make: make}),
-      _.implement(ILookup, {lookup: lookup}),
-      _.implement(IBuffer, {load: load, edit: edit}), //TODO ITransientBuffer.load
-      _.implement(IQueryable, {query: query}));
-
-  })();
 
   //NOTE a view is capable of returning a seq of all possible `IView.interactions` each implementing `IIdentifiable` and `INamable`.
   //NOTE an interaction is a persistent, validatable object with field schema.  It will be flagged as command or query which will help with processing esp. pipelining.  When successfully validated it has all that it needs to be handled by the handler.  That it can be introspected allows for the UI to help will completing them.
@@ -1769,9 +1292,9 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
 
   var ol = _.doto(
     outline(
-      buffer(
+      w.buffer(
         jsonResource("../data/outline.json", work),
-        $.journal($.cell(indexedEntityWorkspace()))),
+        $.journal($.cell(w.indexedEntityWorkspace()))),
         {root: null}),
     $.sub(_,
       t.filter(function(e){
@@ -1811,11 +1334,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
       ol: ol,
       c: c,
       e: e,
-      assertionStore: assertionStore,
       dirtyKeys: dirtyKeys,
-      questions: questions,
-      assertion: assertion,
-      entityWorkspace: entityWorkspace,
       domain: domain
     }), _.impart(_, _.partly));
 

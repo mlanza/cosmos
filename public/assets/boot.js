@@ -133,6 +133,9 @@ define('cosmos/ontology', ["atomic/core", "vendor/cosmos/ontology"], function(_,
 define('cosmos/shell', ["atomic/core", "vendor/cosmos/shell"], function(_, sh){
   return _.impart(sh, _.partly);
 });
+define('cosmos/work', ["atomic/core", "vendor/cosmos/work"], function(_, w){
+  return _.impart(w, _.partly);
+});
 define('cmd/imports', function(){
   return {
     "_": "atomic/core",
@@ -145,7 +148,9 @@ define('cmd/imports', function(){
     "html": "atomic/html",
     "svg": "atomic/svg",
     "repos": "atomic/repos",
-    "ont": "cosmos/ontology"
+    "ont": "cosmos/ontology",
+    "sh": "cosmos/shell",
+    "w": "cosmos/work"
   }
 });
 define('cmd', ["atomic/core", "cmd/imports", "promise"], function(_, defaults, Promise){
