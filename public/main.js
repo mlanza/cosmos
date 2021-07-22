@@ -40,20 +40,6 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
       IFunctor = _.IFunctor,
       IInclusive = _.IInclusive;
 
-  var seed = _.generate(_.negatives);
-
-  function create(){ //USE What.create = create; What.create(1);
-    return _.apply(_.constructs(this), _.slice(arguments));  //universal `new-less` create function
-  }
-
-  function createable(Type){ //TODO consider
-    Type.create = create;
-  }
-
-  function path(){
-    return _.replace(_.join("", _.indexed(arguments)), /\/\//g, '/');
-  }
-
   var IOriginated = _.protocol({
     origin: null
   });
