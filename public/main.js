@@ -204,7 +204,9 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     }
 
     function fld(self, key){
-      return ont.fld(self.topic, key) || _.assoc(_.isArray(_.get(self.attrs, key)) ? ont.field(key, unlimited, ont.valuesCaster) : ont.field(key, ont.optional, ont.valueCaster), "missing", true);
+      return ont.fld(self.topic, key) || _.assoc(_.isArray(_.get(self.attrs, key))
+        ? ont.field(key, unlimited, ont.valuesCaster)
+        : ont.field(key, ont.optional, ont.valueCaster), "missing", true);
     }
 
     function kind(self){ //TODO use?
@@ -212,11 +214,11 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     }
 
     function lookup(self, key){
-      return ont.aget(ont.field(self, key), self);
+      return ont.aget(fld(self, key), self);
     }
 
     function assoc(self, key, values){
-      return ont.aset(ont.field(self, key), self, values);
+      return ont.aset(fld(self, key), self, values);
     }
 
     function contains(self, key){
@@ -233,7 +235,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
 
     function constraints(self){
       return _.reduce(function(memo, key){
-        return _.append(memo, vd.optional(key, IConstrainable.constraints(ont.field(self, key))));
+        return _.append(memo, vd.optional(key, IConstrainable.constraints(fld(self, key))));
       }, vd.and(), keys(self));
     }
 
