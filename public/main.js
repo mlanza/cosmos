@@ -1075,8 +1075,6 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
 
   })();
 
-
-
   //NOTE a view is capable of returning a seq of all possible `IView.interactions` each implementing `IIdentifiable` and `INamable`.
   //NOTE an interaction is a persistent, validatable object with field schema.  It will be flagged as command or query which will help with processing esp. pipelining.  When successfully validated it has all that it needs to be handled by the handler.  That it can be introspected allows for the UI to help will completing them.
   function Outline(buffer, model, commandBus, eventBus, emitter, options){
@@ -1192,11 +1190,29 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
 
   })();
 
+  function Cursor(cell){
+    this.cell = cell;
+  }
+
+  function deref(self){
+    return _.just(self.cell, _.deref, _.deref);
+  }
+
+  function swap(self, f){
+    _.swap(self.cell, _.fmap(_, f));
+  }
+
+  _.doto(Cursor,
+    _.implement(_.IDeref, {deref: deref}),
+    _.implement(_.ISwap, {swap: swap}));
+
+  var $ws = new Cursor($.cell(_.journal(w.entityWorkspace())));
+
   var ol = _.doto(
     outline(
       w.buffer(
         jsonResource("../data/outline.json", tidd.tiddology),
-        $.journal($.cell(w.indexedEntityWorkspace()))),
+        $ws),
         {root: null}),
     $.sub(_,
       t.filter(function(e){
