@@ -15,7 +15,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
       ITransientAssociative = mut.ITransientAssociative,
       IDispatch = $.IDispatch,
       ISubscribe = $.ISubscribe,
-      IRevertible = $.IRevertible,
+      IRevertible = _.IRevertible,
       IEmptyableCollection = _.IEmptyableCollection,
       ICheckable = vd.ICheckable,
       IConstrainable = vd.IConstrainable,

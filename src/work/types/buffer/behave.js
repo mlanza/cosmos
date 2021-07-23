@@ -39,7 +39,7 @@ function save(self){
 }
 
 export default _.does(
-  _.forward("workspace", _.ISwap, _.IReduce, $.IRevertible),
+  _.forward("workspace", _.ISwap, _.IReduce, _.IRevertible),
   _.implement(IPersistable, {save}), //TODO
   _.implement(IBuffer, {load, edit}), //TODO ITransientBuffer.load
   _.implement(_.IAssociative, {contains}),

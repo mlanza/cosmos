@@ -165,20 +165,6 @@ define(['exports', 'atomic/core', 'atomic/transducers', 'symbol', 'promise', 'at
   var unsub$6 = _.overload(null, null, ISubscribe.unsub);
   var subscribed$6 = ISubscribe.subscribed;
 
-  var IRevertible = _.protocol({
-    undo: null,
-    redo: null,
-    flush: null,
-    undoable: null,
-    redoable: null
-  });
-
-  var undo$1 = IRevertible.undo;
-  var undoable$1 = IRevertible.undoable;
-  var redo$1 = IRevertible.redo;
-  var redoable$1 = IRevertible.redoable;
-  var flush$1 = IRevertible.flush;
-
   var p = /*#__PURE__*/Object.freeze({
     __proto__: null,
     dispatch: dispatch$3,
@@ -196,12 +182,7 @@ define(['exports', 'atomic/core', 'atomic/transducers', 'symbol', 'promise', 'at
     into: into,
     sub: sub$7,
     unsub: unsub$6,
-    subscribed: subscribed$6,
-    undo: undo$1,
-    undoable: undoable$1,
-    redo: redo$1,
-    redoable: redoable$1,
-    flush: flush$1
+    subscribed: subscribed$6
   });
 
   function Observable(subscribe) {
@@ -677,7 +658,7 @@ define(['exports', 'atomic/core', 'atomic/transducers', 'symbol', 'promise', 'at
     reset: reset
   }), _.implement(_.ISwap, {
     swap: swap
-  }), _.implement(IRevertible, {
+  }), _.implement(_.IRevertible, {
     undo: undo,
     redo: redo,
     flush: flush,
@@ -1829,7 +1810,6 @@ define(['exports', 'atomic/core', 'atomic/transducers', 'symbol', 'promise', 'at
   exports.IEvented = IEvented;
   exports.IMiddleware = IMiddleware;
   exports.IPublish = IPublish;
-  exports.IRevertible = IRevertible;
   exports.ISubscribe = ISubscribe;
   exports.Journal = Journal;
   exports.MessageHandler = MessageHandler;
@@ -1865,7 +1845,6 @@ define(['exports', 'atomic/core', 'atomic/transducers', 'symbol', 'promise', 'at
   exports.eventDispatcher = eventDispatcher;
   exports.events = events;
   exports.fixed = fixed;
-  exports.flush = flush$1;
   exports.focus = focus;
   exports.fromElement = fromElement;
   exports.fromEvent = fromEvent;
@@ -1896,8 +1875,6 @@ define(['exports', 'atomic/core', 'atomic/transducers', 'symbol', 'promise', 'at
   exports.pub = pub$4;
   exports.raise = raise$1;
   exports.readonly = readonly;
-  exports.redo = redo$1;
-  exports.redoable = redoable$1;
   exports.release = release$1;
   exports.render = render;
   exports.renderDiff = renderDiff;
@@ -1913,8 +1890,6 @@ define(['exports', 'atomic/core', 'atomic/transducers', 'symbol', 'promise', 'at
   exports.toObservable = toObservable;
   exports.toggles = toggles;
   exports.trigger = trigger;
-  exports.undo = undo$1;
-  exports.undoable = undoable$1;
   exports.unsub = unsub$6;
   exports.via = via;
 
