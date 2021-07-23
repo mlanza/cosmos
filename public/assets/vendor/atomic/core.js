@@ -1105,12 +1105,12 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     reducekv: null
   });
 
-  function lookup$b(self, key) {
+  function lookup$c(self, key) {
     return self && self[key];
   }
 
   var ILookup = protocol({
-    lookup: lookup$b
+    lookup: lookup$c
   });
 
   var IMap = protocol({
@@ -1169,7 +1169,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     return args.length > 0 ? assocN.apply(void 0, [instance].concat(args)) : instance;
   }
 
-  var assoc$9 = overload(null, null, null, IAssociative.assoc, assocN);
+  var assoc$a = overload(null, null, null, IAssociative.assoc, assocN);
   function assocIn(self, keys, value) {
     var key = keys[0];
 
@@ -1247,32 +1247,32 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     return IAssociative.contains(self, key) && get(self, key) === value;
   }
 
-  var contains$9 = overload(null, null, IAssociative.contains, contains3);
+  var contains$a = overload(null, null, IAssociative.contains, contains3);
   var updateIn = overload(null, null, null, updateIn3, updateIn4, updateIn5, updateIn6, updateInN);
   var rewrite = branch(IAssociative.contains, update, identity);
   var prop = overload(null, function (key) {
     return overload(null, function (v) {
       return get(v, key);
     }, function (v) {
-      return assoc$9(v, key, v);
+      return assoc$a(v, key, v);
     });
-  }, get, assoc$9);
+  }, get, assoc$a);
 
   function patch2(target, source) {
     return reducekv$b(function (memo, key, value) {
-      return assoc$9(memo, key, typeof value === "function" ? value(get(memo, key)) : value);
+      return assoc$a(memo, key, typeof value === "function" ? value(get(memo, key)) : value);
     }, target, source);
   }
 
   var patch = overload(null, identity, patch2, reducing(patch2));
 
   function merge$5(target, source) {
-    return reducekv$b(assoc$9, target, source);
+    return reducekv$b(assoc$a, target, source);
   }
 
   function mergeWith3(f, init, x) {
     return reducekv$b(function (memo, key, value) {
-      return assoc$9(memo, key, contains$9(memo, key) ? f(get(memo, key), value) : f(value));
+      return assoc$a(memo, key, contains$a(memo, key) ? f(get(memo, key), value) : f(value));
     }, init, x);
   }
 
@@ -1319,6 +1319,14 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
 
   var IReversible = protocol({
     reverse: null
+  });
+
+  var IRevertible = protocol({
+    undo: null,
+    redo: null,
+    flush: null,
+    undoable: null,
+    redoable: null
   });
 
   var ISend = protocol({
@@ -1493,7 +1501,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   var iequiv = implement(IEquiv, {
     equiv: equiv$8
   });
-  var behave$y = does(iequiv, implement(ISequential$1), implement(IBlankable, {
+  var behave$z = does(iequiv, implement(ISequential$1), implement(IBlankable, {
     blank: constantly(true)
   }), implement(IReversible, {
     reverse: emptyList
@@ -1518,7 +1526,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     seq: constantly(null)
   }));
 
-  behave$y(EmptyList);
+  behave$z(EmptyList);
 
   function compare$6(x, y) {
     if (x === y) {
@@ -1736,7 +1744,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
 
   var start$3 = identity,
       end$3 = identity;
-  var behave$x = does(implement(IDivisible, {
+  var behave$y = does(implement(IDivisible, {
     divide: divide$3
   }), implement(IMultipliable, {
     mult: mult$1
@@ -1754,9 +1762,9 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   var behaviors = {};
 
   Object.assign(behaviors, {
-    Number: behave$x
+    Number: behave$y
   });
-  behave$x(Number);
+  behave$y(Number);
 
   function LazySeq(perform) {
     this.perform = perform;
@@ -1795,16 +1803,16 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     return !self;
   }
 
-  var behave$w = does(implement(IComparable, {
+  var behave$x = does(implement(IComparable, {
     compare: compare$4
   }), implement(IInverse, {
     inverse: inverse$2
   }));
 
   Object.assign(behaviors, {
-    Boolean: behave$w
+    Boolean: behave$x
   });
-  behave$w(Boolean);
+  behave$x(Boolean);
 
   function List(head, tail) {
     this.head = head;
@@ -1842,7 +1850,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
 
   var merge$4 = overload(null, identity, IMergable.merge, reducing(IMergable.merge));
 
-  function assoc$8(self, key, value) {
+  function assoc$9(self, key, value) {
     var obj = {};
     obj[key] = value;
     return obj;
@@ -1876,7 +1884,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     return count$d(xs) ? merge$4.apply(null, Array.from(xs)) : null;
   }
 
-  var behave$v = does(implement(IClonable, {
+  var behave$w = does(implement(IClonable, {
     clone: identity
   }), implement(ICompactible, {
     compact: identity
@@ -1903,7 +1911,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   }), implement(IInclusive, {
     includes: constantly(false)
   }), implement(IAssociative, {
-    assoc: assoc$8,
+    assoc: assoc$9,
     contains: constantly(false)
   }), implement(INext, {
     next: identity
@@ -1924,7 +1932,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     reduce: reduce$d
   }));
 
-  behave$v(Nil);
+  behave$w(Nil);
 
   var deref$7 = IDeref.deref;
 
@@ -2279,7 +2287,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   }
   function keyed(f, keys) {
     return reduce$f(function (memo, key) {
-      return assoc$9(memo, key, f(key));
+      return assoc$a(memo, key, f(key));
     }, {}, keys);
   }
 
@@ -3014,7 +3022,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
 
   function index4(init, key, val, coll) {
     return reduce$f(function (memo, x) {
-      return assoc$9(memo, key(x), val(x));
+      return assoc$a(memo, key(x), val(x));
     }, init, coll);
   }
 
@@ -3049,11 +3057,11 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     return self.valueOf();
   }
 
-  var behave$u = does(implement(IDeref, {
+  var behave$v = does(implement(IDeref, {
     deref: deref$6
   }));
 
-  behave$u(Reduced);
+  behave$v(Reduced);
 
   var compact1$1 = partial(filter, identity);
 
@@ -3274,11 +3282,11 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     return self.attrs;
   }
 
-  function contains$8(self, key) {
+  function contains$9(self, key) {
     return self.attrs.hasOwnProperty(key);
   }
 
-  function lookup$a(self, key) {
+  function lookup$b(self, key) {
     return get(self.attrs, key);
   }
 
@@ -3306,9 +3314,9 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     return vals$6(self.attrs);
   }
 
-  function assoc$7(self, key, value) {
+  function assoc$8(self, key, value) {
     return Object.assign(clone$5(self), {
-      attrs: assoc$9(self.attrs, key, value)
+      attrs: assoc$a(self.attrs, key, value)
     });
   }
 
@@ -3332,13 +3340,13 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
 
   function reduce$b(self, f, init) {
     return reduce$f(function (memo, key) {
-      return f(memo, [key, lookup$a(self, key)]);
+      return f(memo, [key, lookup$b(self, key)]);
     }, init, keys$b(self));
   }
 
   function reducekv$9(self, f, init) {
     return reduce$f(function (memo, key) {
-      return f(memo, key, lookup$a(self, key));
+      return f(memo, key, lookup$b(self, key));
     }, init, keys$b(self));
   }
 
@@ -3358,7 +3366,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
       empty: empty
     }, Type);
   }
-  var behave$t = does(emptyable, implement(IReduce, {
+  var behave$u = does(emptyable, implement(IReduce, {
     reduce: reduce$b
   }), implement(IKVReduce, {
     reducekv: reducekv$9
@@ -3369,10 +3377,10 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   }), implement(IEmptyableCollection, {
     empty: empty$2
   }), implement(IAssociative, {
-    assoc: assoc$7,
-    contains: contains$8
+    assoc: assoc$8,
+    contains: contains$9
   }), implement(ILookup, {
-    lookup: lookup$a
+    lookup: lookup$b
   }), implement(IMap, {
     dissoc: dissoc$5,
     keys: keys$a,
@@ -3422,17 +3430,17 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     return rest$d(seq$7(self));
   }
 
-  function lookup$9(self, key) {
+  function lookup$a(self, key) {
     return get(self.attrs, key);
   }
 
-  function assoc$6(self, key, value) {
-    var values = lookup$9(self, key) || self.empty(key);
-    return new self.constructor(assoc$9(self.attrs, key, conj$8(values, value)), self.empty);
+  function assoc$7(self, key, value) {
+    var values = lookup$a(self, key) || self.empty(key);
+    return new self.constructor(assoc$a(self.attrs, key, conj$8(values, value)), self.empty);
   }
 
-  function contains$7(self, key) {
-    return contains$9(self.attrs, key);
+  function contains$8(self, key) {
+    return contains$a(self.attrs, key);
   }
 
   function reduce$a(self, f, init) {
@@ -3451,7 +3459,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     }, init);
   }
 
-  var behave$s = does(behave$t, implement(IMap, {
+  var behave$t = does(behave$u, implement(IMap, {
     keys: keys$9
   }), implement(ICoercible, {
     toArray: comp(Array.from, seq$7)
@@ -3464,16 +3472,16 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   }), implement(ISeqable, {
     seq: seq$7
   }), implement(ILookup, {
-    lookup: lookup$9
+    lookup: lookup$a
   }), implement(IAssociative, {
-    assoc: assoc$6,
-    contains: contains$7
+    assoc: assoc$7,
+    contains: contains$8
   }), implement(ISeq, {
     first: first$a,
     rest: rest$a
   }));
 
-  behave$s(Multimap);
+  behave$t(Multimap);
 
   var p$4 = /*#__PURE__*/Object.freeze({
     __proto__: null,
@@ -3524,22 +3532,22 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   }
 
   function key$2(self) {
-    return lookup$8(self, 0);
+    return lookup$9(self, 0);
   }
 
   function val$2(self) {
-    return lookup$8(self, 1);
+    return lookup$9(self, 1);
   }
 
   function find$4(self, key) {
-    return contains$6(self, key) ? [key, lookup$8(self, key)] : null;
+    return contains$7(self, key) ? [key, lookup$9(self, key)] : null;
   }
 
-  function contains$6(self, key) {
+  function contains$7(self, key) {
     return key < count$d(self.seq) - self.start;
   }
 
-  function lookup$8(self, key) {
+  function lookup$9(self, key) {
     return get(self.seq, self.start + key);
   }
 
@@ -3623,7 +3631,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     }), drop(self.start, self.seq));
   }
 
-  var behave$r = does(iterable, iequiv, implement(ISequential$1), implement(IIndexed, {
+  var behave$s = does(iterable, iequiv, implement(ISequential$1), implement(IIndexed, {
     nth: nth$4,
     idx: idx$1
   }), implement(IReversible, {
@@ -3636,7 +3644,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   }), implement(IFind, {
     find: find$4
   }), implement(IAssociative, {
-    contains: contains$6
+    contains: contains$7
   }), implement(IAppendable, {
     append: append$4
   }), implement(IPrependable, {
@@ -3648,9 +3656,9 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   }), implement(IKVReduce, {
     reducekv: reducekv$7
   }), implement(IFn, {
-    invoke: lookup$8
+    invoke: lookup$9
   }), implement(ILookup, {
-    lookup: lookup$8
+    lookup: lookup$9
   }), implement(ICollection, {
     conj: append$4
   }), implement(INext, {
@@ -3666,7 +3674,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     count: count$9
   }));
 
-  behave$r(IndexedSeq);
+  behave$s(IndexedSeq);
 
   function clone$4(self) {
     return new revSeq(self.coll, self.idx);
@@ -3731,7 +3739,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   }
 
   var reduce$8 = overload(null, null, reduce2, reduce3);
-  var behave$q = does(iterable, implement(ISequential$1), implement(ICounted, {
+  var behave$r = does(iterable, implement(ISequential$1), implement(ICounted, {
     count: count$8
   }), implement(IIndexed, {
     nth: nth$3
@@ -3759,7 +3767,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     clone: clone$4
   }));
 
-  behave$q(RevSeq);
+  behave$r(RevSeq);
 
   function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
   var name$1 = INamable.name;
@@ -3885,15 +3893,15 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   }
 
   function find$3(self, key) {
-    return contains$5(self, key) ? [key, lookup$7(self, key)] : null;
+    return contains$6(self, key) ? [key, lookup$8(self, key)] : null;
   }
 
-  function lookup$7(self, key) {
+  function lookup$8(self, key) {
     return key in self ? self[key] : null;
   }
 
-  function assoc$5(self, key, value) {
-    if (lookup$7(self, key) === value) {
+  function assoc$6(self, key, value) {
+    if (lookup$8(self, key) === value) {
       return self;
     }
 
@@ -3902,7 +3910,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     return arr;
   }
 
-  function contains$5(self, key) {
+  function contains$6(self, key) {
     return key > -1 && key < self.length;
   }
 
@@ -3945,7 +3953,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     return self.length;
   }
 
-  var nth$2 = lookup$7;
+  var nth$2 = lookup$8;
 
   function idx(self, x) {
     var n = self.indexOf(x);
@@ -3974,7 +3982,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   }), implement(ICounted, {
     count: count$7
   }));
-  var behave$p = does((_naming = naming, _Symbol2 = _Symbol("Array"), function naming(_argPlaceholder) {
+  var behave$q = does((_naming = naming, _Symbol2 = _Symbol("Array"), function naming(_argPlaceholder) {
     return _naming(_argPlaceholder, _Symbol2);
   }), iequiv, iindexed, implement(ISequential$1), implement(IMap, {
     dissoc: dissoc$4,
@@ -4008,7 +4016,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   }), implement(IClonable, {
     clone: clone$3
   }), implement(IFn, {
-    invoke: lookup$7
+    invoke: lookup$8
   }), implement(IEmptyableCollection, {
     empty: emptyArray
   }), implement(IReduce, {
@@ -4016,10 +4024,10 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   }), implement(IKVReduce, {
     reducekv: reducekv$6
   }), implement(ILookup, {
-    lookup: lookup$7
+    lookup: lookup$8
   }), implement(IAssociative, {
-    assoc: assoc$5,
-    contains: contains$5
+    assoc: assoc$6,
+    contains: contains$6
   }), implement(IBlankable, {
     blank: blank$3
   }), implement(ISeqable, {
@@ -4035,10 +4043,10 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   }));
 
   Object.assign(behaviors, {
-    Array: behave$p
+    Array: behave$q
   });
-  var iarray = behave$p;
-  behave$p(Array);
+  var iarray = behave$q;
+  behave$q(Array);
 
   function monthDays(self) {
     return patch(self, {
@@ -4399,12 +4407,12 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     return end$2(self.period);
   }
 
-  var behave$o = does(implement(IBounds, {
+  var behave$p = does(implement(IBounds, {
     start: start$1,
     end: end$1
   }));
 
-  behave$o(Benchmark);
+  behave$p(Benchmark);
 
   function conj$4(self, x) {
     return new self.constructor(conj$8(self.colls, [x]));
@@ -4462,7 +4470,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     }, 0);
   }
 
-  var behave$n = does(iterable, implement(IReduce, ilazyseq), implement(IKVReduce, ilazyseq), implement(ISequential$1), implement(IEmptyableCollection, {
+  var behave$o = does(iterable, implement(IReduce, ilazyseq), implement(IKVReduce, ilazyseq), implement(ISequential$1), implement(IEmptyableCollection, {
     empty: emptyList
   }), implement(IKVReduce, {
     reducekv: reducekv$5
@@ -4485,7 +4493,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     count: count$6
   }));
 
-  behave$n(Concatenated);
+  behave$o(Concatenated);
 
   function date7(year, month, day, hour, minute, second, millisecond) {
     return new Date(year, month || 0, day || 1, hour || 0, minute || 0, second || 0, millisecond || 0);
@@ -4507,7 +4515,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
 
   function unit(key) {
     return function (n) {
-      return new Duration(assoc$9({}, key, n));
+      return new Duration(assoc$a({}, key, n));
     };
   }
 
@@ -4530,7 +4538,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
 
   function reducekv$4(self, f, init) {
     return reduce$f(function (memo, key) {
-      return f(memo, key, lookup$6(self, key));
+      return f(memo, key, lookup$7(self, key));
     }, init, keys$6(self));
   }
 
@@ -4544,7 +4552,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
 
   function fmap$7(self, f) {
     return new self.constructor(reducekv$4(self, function (memo, key, value) {
-      return assoc$9(memo, key, f(value));
+      return assoc$a(memo, key, f(value));
     }, {}));
   }
 
@@ -4556,7 +4564,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     return new self.constructor(dissoc$6(self.units, key));
   }
 
-  function lookup$6(self, key) {
+  function lookup$7(self, key) {
     if (!includes$9(Duration.units, key)) {
       throw new Error("Invalid unit.");
     }
@@ -4564,23 +4572,23 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     return get(self.units, key);
   }
 
-  function contains$4(self, key) {
-    return contains$9(self.units, key);
+  function contains$5(self, key) {
+    return contains$a(self.units, key);
   }
 
-  function assoc$4(self, key, value) {
+  function assoc$5(self, key, value) {
     if (!includes$9(Duration.units, key)) {
       throw new Error("Invalid unit.");
     }
 
-    return new self.constructor(assoc$9(self.units, key, value));
+    return new self.constructor(assoc$a(self.units, key, value));
   }
 
   function divide$1(a, b) {
     return a.valueOf() / b.valueOf();
   }
 
-  var behave$m = does(implement(IKVReduce, {
+  var behave$n = does(implement(IKVReduce, {
     reducekv: reducekv$4
   }), implement(IAddable, {
     add: merge$2
@@ -4589,10 +4597,10 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   }), implement(IFunctor, {
     fmap: fmap$7
   }), implement(IAssociative, {
-    assoc: assoc$4,
-    contains: contains$4
+    assoc: assoc$5,
+    contains: contains$5
   }), implement(ILookup, {
-    lookup: lookup$6
+    lookup: lookup$7
   }), implement(IMap, {
     keys: keys$6,
     dissoc: dissoc$3
@@ -4604,7 +4612,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     toDuration: identity
   }));
 
-  behave$m(Duration);
+  behave$n(Duration);
 
   function _slicedToArray$1(arr, i) { return _arrayWithHoles$1(arr) || _iterableToArrayLimit$1(arr, i) || _unsupportedIterableToArray$3(arr, i) || _nonIterableRest$1(); }
 
@@ -4622,7 +4630,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     return mergeWith(add$3, self, isNumber(other) ? days(other) : other);
   }
 
-  function lookup$5(self, key) {
+  function lookup$6(self, key) {
     switch (key) {
       case "year":
         return self.getFullYear();
@@ -4652,7 +4660,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     this.target = target;
   }
 
-  function contains$3(self, key) {
+  function contains$4(self, key) {
     return keys$5().indexOf(key) > -1;
   }
 
@@ -4672,11 +4680,11 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
         key = _ref2[0],
         value = _ref2[1];
 
-    return assoc$3(self, key, value);
+    return assoc$4(self, key, value);
   } //the benefit of exposing internal state as a map is assocIn and updateIn
 
 
-  function assoc$3(self, key, value) {
+  function assoc$4(self, key, value) {
     var dt = new Date(self.valueOf());
 
     switch (key) {
@@ -4748,7 +4756,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     return self.valueOf();
   }
 
-  var behave$l = does(implement(IAddable, {
+  var behave$m = does(implement(IAddable, {
     add: add$1
   }), implement(IDeref, {
     deref: deref$5
@@ -4771,18 +4779,18 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   }), implement(ICollection, {
     conj: conj$3
   }), implement(IAssociative, {
-    assoc: assoc$3,
-    contains: contains$3
+    assoc: assoc$4,
+    contains: contains$4
   }), implement(ILookup, {
-    lookup: lookup$5
+    lookup: lookup$6
   }), implement(IClonable, {
     clone: clone$2
   }));
 
   Object.assign(behaviors, {
-    Date: behave$l
+    Date: behave$m
   });
-  behave$l(Date);
+  behave$m(Date);
 
   function error(message) {
     return new Error(message);
@@ -4795,13 +4803,13 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     return reject(self);
   }
 
-  var behave$k = does(implement(IForkable, {
+  var behave$l = does(implement(IForkable, {
     fork: fork$7
   }), implement(IFunctor, {
     fmap: identity
   }));
 
-  behave$k(Error);
+  behave$l(Error);
 
   function Fluent(value) {
     this.value = value;
@@ -4821,13 +4829,13 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     return self.value;
   }
 
-  var behave$j = does(implement(IDeref, {
+  var behave$k = does(implement(IDeref, {
     deref: deref$4
   }), implement(IFunctor, {
     fmap: fmap$6
   }));
 
-  behave$j(Fluent);
+  behave$k(Fluent);
 
   function FiniteStateMachine(state, transitions) {
     this.state = state;
@@ -4859,7 +4867,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     })) || self;
   }
 
-  var behave$i = does(implement(IEquiv, {
+  var behave$j = does(implement(IEquiv, {
     equiv: equiv$4
   }), implement(IStateMachine, {
     state: state$1,
@@ -4867,7 +4875,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     transitions: transitions$1
   }));
 
-  behave$i(FiniteStateMachine);
+  behave$j(FiniteStateMachine);
 
   Function.prototype[_Symbol.toStringTag] = "Function";
 
@@ -4897,7 +4905,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     return self.name ? self.name : get(/function (.+)\s?\(/.exec(self.toString()), 1); //latter is for IE
   }
 
-  var behave$h = does(implement(INamable, {
+  var behave$i = does(implement(INamable, {
     name: name
   }), implement(IAppendable, {
     append: append$2
@@ -4907,7 +4915,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     invoke: invoke$1
   }));
 
-  behave$h(Function);
+  behave$i(Function);
 
   function GUID(id) {
     this.id = id;
@@ -4939,11 +4947,11 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     return other && other.constructor === self.constructor && self.id === other.id;
   }
 
-  var behave$g = does(implement(IEquiv, {
+  var behave$h = does(implement(IEquiv, {
     equiv: equiv$3
   }));
 
-  behave$g(GUID);
+  behave$h(GUID);
 
   function Indexed(obj) {
     this.obj = obj;
@@ -4982,7 +4990,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     }, self);
   }
 
-  var behave$f = does(iterable, implement(IReduce, ilazyseq), implement(IKVReduce, ilazyseq), implement(ISequential$1), implement(IInclusive, {
+  var behave$g = does(iterable, implement(IReduce, ilazyseq), implement(IKVReduce, ilazyseq), implement(ISequential$1), implement(IInclusive, {
     includes: includes$5
   }), implement(IIndexed, {
     nth: nth$1
@@ -5001,38 +5009,56 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     count: count$5
   }));
 
-  behave$f(Indexed);
+  behave$g(Indexed);
 
-  function Left(value) {
-    this.value = value;
-  }
-  function left1(value) {
-    return new Left(value);
-  }
-  var left = overload(null, left1, partial(thrush, left1));
-  function isLeft(self) {
-    return self instanceof Left;
+  function Journal(pos, max, history, state) {
+    this.pos = pos;
+    this.max = max;
+    this.history = history;
+    this.state = state;
   }
 
-  var fmap$5 = identity;
-
-  function fork$6(self, reject, resolve) {
-    return reject(self.value);
+  function journal2(max, state) {
+    return new Journal(0, max, [state], state);
   }
 
-  function deref$3(self) {
-    return self.value;
+  function journal1(state) {
+    return journal2(Infinity, state);
   }
 
-  var behave$e = does(implement(IDeref, {
-    deref: deref$3
-  }), implement(IForkable, {
-    fork: fork$6
-  }), implement(IFunctor, {
-    fmap: fmap$5
-  }));
+  var journal = overload(null, journal1, journal2);
 
-  behave$e(Left);
+  var append$1 = overload(null, identity, IAppendable.append, reducing(IAppendable.append));
+
+  var blank$2 = IBlankable.blank;
+  function blot(self) {
+    return blank$2(self) ? null : self;
+  }
+
+  var chain$1 = IChainable.chain;
+
+  function compact$1(self) {
+    return satisfies(ICompactible, self) ? ICompactible.compact(self) : filter(identity, self);
+  }
+  var only = unspread(compact$1);
+
+  var dispose = IDisposable.dispose;
+
+  var empty$1 = IEmptyableCollection.empty;
+
+  var find$2 = IFind.find;
+
+  var invoke = IFn.invoke;
+
+  function fork2(self, resolve) {
+    return IForkable.fork(self, noop, resolve);
+  }
+
+  var fork$6 = overload(null, null, fork2, IForkable.fork);
+
+  var handles = IHandler.handles;
+
+  var path$1 = IPath.path;
 
   function Lens(root, path) {
     this.root = root;
@@ -5041,8 +5067,6 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   function lens(root, path) {
     return new Lens(root, path || []);
   }
-
-  var path$1 = IPath.path;
 
   var _juxt, _map;
   function downward(f) {
@@ -5077,15 +5101,368 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     return _map(_juxt, _argPlaceholder);
   }), leaves, lens);
 
+  var identifier = IIdentifiable.identifier;
+
+  function afterN(self) {
+    var ref = self;
+
+    for (var _len = arguments.length, els = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+      els[_key - 1] = arguments[_key];
+    }
+
+    while (els.length) {
+      var el = els.shift();
+      IInsertable.after(ref, el);
+      ref = el;
+    }
+  }
+
+  var after = overload(null, identity, IInsertable.after, afterN);
+
+  function beforeN(self) {
+    var ref = self;
+
+    for (var _len2 = arguments.length, els = new Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
+      els[_key2 - 1] = arguments[_key2];
+    }
+
+    while (els.length) {
+      var el = els.pop();
+      IInsertable.before(ref, el);
+      ref = el;
+    }
+  }
+
+  var before = overload(null, identity, IInsertable.before, beforeN);
+
+  var key = IMapEntry.key;
+  var val = IMapEntry.val;
+
+  function isRegExp(self) {
+    return self.constructor === RegExp;
+  }
+
+  function checkPattern(_, pattern) {
+    return isString(pattern) || isRegExp(pattern);
+  }
+
+  var matches$1 = pre(IMatchable.matches, checkPattern);
+
+  var otherwise$3 = IOtherwise.otherwise;
+
+  var prepend$2 = overload(null, identity, IPrependable.prepend, reducing(IPrependable.prepend, reverse$4));
+
+  var reset$1 = IReset.reset;
+
+  var undo$1 = IRevertible.undo;
+  var undoable$1 = IRevertible.undoable;
+  var redo$1 = IRevertible.redo;
+  var redoable$1 = IRevertible.redoable;
+  var flush$1 = IRevertible.flush;
+
+  var send = ISend.send;
+
+  var _ISet$unite, _reduce;
+  var disj = overload(null, identity, ISet.disj, reducing(ISet.disj));
+  var union2 = (_reduce = reduce$f, _ISet$unite = ISet.unite, function reduce(_argPlaceholder, _argPlaceholder2) {
+    return _reduce(_ISet$unite, _argPlaceholder, _argPlaceholder2);
+  });
+
+  function intersection2(xs, ys) {
+    return reduce$f(function (memo, x) {
+      return includes$9(ys, x) ? conj$8(memo, x) : memo;
+    }, empty$1(xs), xs);
+  }
+
+  function difference2(xs, ys) {
+    return reduce$f(function (memo, x) {
+      return includes$9(ys, x) ? memo : conj$8(memo, x);
+    }, empty$1(xs), xs);
+  }
+
+  function subset(self, other) {
+    var _other, _includes;
+
+    return every((_includes = includes$9, _other = other, function includes(_argPlaceholder3) {
+      return _includes(_other, _argPlaceholder3);
+    }), self);
+  }
+  function superset(self, other) {
+    return subset(other, self);
+  }
+  var unite = overload(null, null, ISet.unite, reducing(ISet.unite));
+  var union = overload(null, identity, union2, reducing(union2));
+  var intersection = overload(null, null, intersection2, reducing(intersection2));
+  var difference = overload(null, null, difference2, reducing(difference2));
+
+  var state = IStateMachine.state;
+  var transition = IStateMachine.transition;
+  var transitions = IStateMachine.transitions;
+
+  var split$2 = ISplittable.split;
+
+  function _toConsumableArray$1(arr) { return _arrayWithoutHoles$1(arr) || _iterableToArray$1(arr) || _unsupportedIterableToArray$2(arr) || _nonIterableSpread$1(); }
+
+  function _nonIterableSpread$1() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+
+  function _unsupportedIterableToArray$2(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$2(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$2(o, minLen); }
+
+  function _iterableToArray$1(iter) { if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null) return Array.from(iter); }
+
+  function _arrayWithoutHoles$1(arr) { if (Array.isArray(arr)) return _arrayLikeToArray$2(arr); }
+
+  function _arrayLikeToArray$2(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
+  function swap3(self, f, a) {
+    return ISwap.swap(self, function (state) {
+      return f(state, a);
+    });
+  }
+
+  function swap4(self, f, a, b) {
+    return ISwap.swap(self, function (state) {
+      return f(state, a, b);
+    });
+  }
+
+  function swapN(self, f, a, b, cs) {
+    return ISwap.swap(self, function (state) {
+      return f.apply(null, [state, a, b].concat(_toConsumableArray$1(cs)));
+    });
+  }
+
+  var swap$1 = overload(null, null, ISwap.swap, swap3, swap4, swapN);
+
+  var fill$2 = ITemplate.fill;
+  function template(self) {
+    for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+      args[_key - 1] = arguments[_key];
+    }
+
+    return fill$2(self, args);
+  }
+
   var p$2 = /*#__PURE__*/Object.freeze({
+    __proto__: null,
+    directed: directed,
+    steps: steps,
+    subtract: subtract,
+    add: add$3,
+    inc: inc,
+    dec: dec,
+    append: append$1,
+    assoc: assoc$a,
+    assocIn: assocIn,
+    update: update,
+    contains: contains$a,
+    updateIn: updateIn,
+    rewrite: rewrite,
+    prop: prop,
+    patch: patch,
+    blank: blank$2,
+    blot: blot,
+    start: start$2,
+    end: end$2,
+    inside: inside,
+    between: between,
+    overlap: overlap,
+    chain: chain$1,
+    clone: clone$5,
+    toArray: toArray$7,
+    toObject: toObject$3,
+    toPromise: toPromise,
+    toDuration: toDuration$1,
+    conj: conj$8,
+    unconj: unconj$1,
+    compact: compact$1,
+    only: only,
+    compare: compare$6,
+    lt: lt,
+    lte: lte,
+    gt: gt,
+    gte: gte,
+    inverse: inverse$1,
+    count: count$d,
+    deref: deref$7,
+    dispose: dispose,
+    divide: divide$2,
+    empty: empty$1,
+    equiv: equiv$9,
+    alike: alike,
+    equivalent: equivalent,
+    eq: eq,
+    notEq: notEq,
+    find: find$2,
+    invoke: invoke,
+    fork: fork$6,
+    fmap: fmap$a,
+    thrush: thrush,
+    pipeline: pipeline,
+    handles: handles,
+    downward: downward,
+    upward: upward,
+    root: root$2,
+    parent: parent$1,
+    parents: parents$2,
+    closest: closest$2,
+    ancestors: ancestors,
+    children: children$1,
+    descendants: descendants$1,
+    nextSibling: nextSibling$2,
+    prevSibling: prevSibling$2,
+    nextSiblings: nextSiblings$2,
+    prevSiblings: prevSiblings$2,
+    siblings: siblings$2,
+    leaves: leaves,
+    asLeaves: asLeaves,
+    identifier: identifier,
+    nth: nth$6,
+    idx: idx$3,
+    includes: includes$9,
+    excludes: excludes,
+    transpose: transpose,
+    after: after,
+    before: before,
+    reducekv2: reducekv2,
+    reducekv3: reducekv3,
+    reducekv: reducekv$b,
+    get: get,
+    getIn: getIn,
+    keys: keys$b,
+    vals: vals$6,
+    dissoc: dissoc$6,
+    key: key,
+    val: val,
+    matches: matches$1,
+    merge: merge$4,
+    mult: mult$2,
+    name: name$1,
+    type: type,
+    what: what,
+    naming: naming,
+    next: next$a,
+    otherwise: otherwise$3,
+    path: path$1,
+    prepend: prepend$2,
+    reduce: reduce$f,
+    reducing: reducing,
+    reset: reset$1,
+    reverse: reverse$4,
+    undo: undo$1,
+    undoable: undoable$1,
+    redo: redo$1,
+    redoable: redoable$1,
+    flush: flush$1,
+    send: send,
+    first: first$d,
+    rest: rest$d,
+    second: second$2,
+    seq: seq$a,
+    disj: disj,
+    subset: subset,
+    superset: superset,
+    unite: unite,
+    union: union,
+    intersection: intersection,
+    difference: difference,
+    state: state,
+    transition: transition,
+    transitions: transitions,
+    split: split$2,
+    swap: swap$1,
+    fill: fill$2,
+    template: template,
+    omit: omit$3
+  });
+
+  function undo(self) {
+    return undoable(self) ? new Journal(self.pos + 1, self.max, self.history, self.state) : self;
+  }
+
+  function redo(self) {
+    return redoable(self) ? new Journal(self.pos - 1, self.max, self.history, self.state) : self;
+  }
+
+  function flush(self) {
+    return new Journal(0, self.max, [self.state], self.state);
+  }
+
+  function undoable(self) {
+    return self.pos < count$d(self.history);
+  }
+
+  function redoable(self) {
+    return self.pos > 0;
+  }
+
+  function assoc$3(self, key, value) {
+    var revised = assoc$a(self.state, key, value);
+    return new Journal(0, self.max, prepend$2(self.history, revised), revised);
+  }
+
+  function contains$3(self, key) {
+    return contains$a(nth$6(self.history, self.pos), key);
+  }
+
+  function lookup$5(self, key) {
+    return get(nth$6(self.history, self.pos), key);
+  }
+
+  var behave$f = does(implement(ILookup, {
+    lookup: lookup$5
+  }), implement(IAssociative, {
+    assoc: assoc$3,
+    contains: contains$3
+  }), implement(IRevertible, {
+    undo: undo,
+    redo: redo,
+    flush: flush,
+    undoable: undoable,
+    redoable: redoable
+  }));
+
+  behave$f(Journal);
+
+  function Left(value) {
+    this.value = value;
+  }
+  function left1(value) {
+    return new Left(value);
+  }
+  var left = overload(null, left1, partial(thrush, left1));
+  function isLeft(self) {
+    return self instanceof Left;
+  }
+
+  var fmap$5 = identity;
+
+  function fork$5(self, reject, resolve) {
+    return reject(self.value);
+  }
+
+  function deref$3(self) {
+    return self.value;
+  }
+
+  var behave$e = does(implement(IDeref, {
+    deref: deref$3
+  }), implement(IForkable, {
+    fork: fork$5
+  }), implement(IFunctor, {
+    fmap: fmap$5
+  }));
+
+  behave$e(Left);
+
+  var p$1 = /*#__PURE__*/Object.freeze({
     __proto__: null,
     keys: keys$b,
     vals: vals$6,
     dissoc: dissoc$6,
-    assoc: assoc$9,
+    assoc: assoc$a,
     assocIn: assocIn,
     update: update,
-    contains: contains$9,
+    contains: contains$a,
     updateIn: updateIn,
     rewrite: rewrite,
     prop: prop,
@@ -5136,7 +5513,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   function conj$2(self, value) {
     var _value, _p$conj, _p;
 
-    return swap$1(self, (_p = p$2, _p$conj = _p.conj, _value = value, function conj(_argPlaceholder) {
+    return swap(self, (_p = p$1, _p$conj = _p.conj, _value = value, function conj(_argPlaceholder) {
       return _p$conj.call(_p, _argPlaceholder, _value);
     }));
   }
@@ -5150,7 +5527,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   function assoc$2(self, key, value) {
     var _key, _value2, _p$assoc, _p2;
 
-    return swap$1(self, (_p2 = p$2, _p$assoc = _p2.assoc, _key = key, _value2 = value, function assoc(_argPlaceholder2) {
+    return swap(self, (_p2 = p$1, _p$assoc = _p2.assoc, _key = key, _value2 = value, function assoc(_argPlaceholder2) {
       return _p$assoc.call(_p2, _argPlaceholder2, _key, _value2);
     }));
   }
@@ -5162,18 +5539,18 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   function dissoc$2(self, key) {
     var _key2, _p$dissoc, _p3;
 
-    return swap$1(self, (_p3 = p$2, _p$dissoc = _p3.dissoc, _key2 = key, function dissoc(_argPlaceholder3) {
+    return swap(self, (_p3 = p$1, _p$dissoc = _p3.dissoc, _key2 = key, function dissoc(_argPlaceholder3) {
       return _p$dissoc.call(_p3, _argPlaceholder3, _key2);
     }));
   }
 
-  function reset$1(self, value) {
+  function reset(self, value) {
     return Object.assign(clone$5(self), {
       root: assocIn(self.root, self.path, value)
     });
   }
 
-  function swap$1(self, f) {
+  function swap(self, f) {
     return Object.assign(clone$5(self), {
       root: updateIn(self.root, self.path, f)
     });
@@ -5202,7 +5579,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     var _value3, _p$get, _p4;
 
     var value = deref$2(self);
-    return map((_p4 = p$2, _p$get = _p4.get, _value3 = value, function get(_argPlaceholder4) {
+    return map((_p4 = p$1, _p$get = _p4.get, _value3 = value, function get(_argPlaceholder4) {
       return _p$get.call(_p4, _value3, _argPlaceholder4);
     }), keys$4(self));
   }
@@ -5281,9 +5658,9 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     vals: vals$2,
     dissoc: dissoc$2
   }), implement(ISwap, {
-    swap: swap$1
+    swap: swap
   }), implement(IReset, {
-    reset: reset$1
+    reset: reset
   }), implement(IHierarchy, {
     root: root$1,
     children: children,
@@ -5323,11 +5700,11 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     return self.value == null ? self : maybe(f(self.value));
   }
 
-  function otherwise$3(self, other) {
+  function otherwise$2(self, other) {
     return self.value == null ? other : self.value;
   }
 
-  function fork$5(self, reject, resolve) {
+  function fork$4(self, reject, resolve) {
     return resolve(self.value == null ? null : self.value);
   }
 
@@ -5338,9 +5715,9 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   var behave$b = does(implement(IDeref, {
     deref: deref$1
   }), implement(IForkable, {
-    fork: fork$5
+    fork: fork$4
   }), implement(IOtherwise, {
-    otherwise: otherwise$3
+    otherwise: otherwise$2
   }), implement(IFunctor, {
     fmap: fmap$4
   }));
@@ -5354,14 +5731,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     return {};
   }
 
-  var key = IMapEntry.key;
-  var val = IMapEntry.val;
-
-  var empty$1 = IEmptyableCollection.empty;
-
-  var invoke = IFn.invoke;
-
-  var p$1 = /*#__PURE__*/Object.freeze({
+  var p = /*#__PURE__*/Object.freeze({
     __proto__: null,
     compare: compare$6,
     lt: lt,
@@ -5385,10 +5755,10 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     dissoc: dissoc$6,
     key: key,
     val: val,
-    assoc: assoc$9,
+    assoc: assoc$a,
     assocIn: assocIn,
     update: update,
-    contains: contains$9,
+    contains: contains$a,
     updateIn: updateIn,
     rewrite: rewrite,
     prop: prop,
@@ -5416,47 +5786,47 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   }
   function subsumes(self, other) {
     return reducekv$b(function (memo, key, value) {
-      return memo ? contains$9(self, key, value) : reduced(memo);
+      return memo ? contains$a(self, key, value) : reduced(memo);
     }, true, other);
   }
   var emptied = branch(satisfies(IEmptyableCollection), empty$1, emptyObject);
   function juxtVals(self, value) {
     return reducekv$b(function (memo, key, f) {
-      return assoc$9(memo, key, isFunction(f) ? f(value) : f);
+      return assoc$a(memo, key, isFunction(f) ? f(value) : f);
     }, emptied(self), self);
   }
   function selectKeys(self, keys) {
     return reduce$f(function (memo, key) {
-      return assoc$9(memo, key, get(self, key));
+      return assoc$a(memo, key, get(self, key));
     }, emptied(self), keys);
   }
   function removeKeys(self, keys) {
     return reducekv$b(function (memo, key, value) {
-      return includes$9(keys, key) ? memo : assoc$9(memo, key, value);
+      return includes$9(keys, key) ? memo : assoc$a(memo, key, value);
     }, emptied(self), self);
   }
   function mapKeys(self, f) {
     return reducekv$b(function (memo, key, value) {
-      return assoc$9(memo, f(key), value);
+      return assoc$a(memo, f(key), value);
     }, emptied(self), self);
   }
 
   function mapVals2(self, f) {
     return reducekv$b(function (memo, key, value) {
-      return assoc$9(memo, key, f(value));
+      return assoc$a(memo, key, f(value));
     }, self, self);
   }
 
   function mapVals3(init, f, pred) {
     return reduce$f(function (memo, key) {
-      return pred(key) ? assoc$9(memo, key, f(get(memo, key))) : memo;
+      return pred(key) ? assoc$a(memo, key, f(get(memo, key))) : memo;
     }, init, keys$b(init));
   }
 
   var mapVals = overload(null, null, mapVals2, mapVals3);
 
   function defaults2(self, defaults) {
-    return reducekv$b(assoc$9, defaults, self);
+    return reducekv$b(assoc$a, defaults, self);
   }
 
   var defaults = overload(null, null, defaults2, reducing(defaults2));
@@ -5470,13 +5840,13 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     };
   }
 
-  function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray$2(arr, i) || _nonIterableRest(); }
+  function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray$1(arr, i) || _nonIterableRest(); }
 
   function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
 
-  function _unsupportedIterableToArray$2(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$2(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$2(o, minLen); }
+  function _unsupportedIterableToArray$1(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$1(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$1(o, minLen); }
 
-  function _arrayLikeToArray$2(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+  function _arrayLikeToArray$1(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 
   function _iterableToArrayLimit(arr, i) { var _i = arr && (typeof Symbol !== "undefined" && arr[Symbol.iterator] || arr["@@iterator"]); if (_i == null) return; var _arr = []; var _n = true; var _d = false; var _s, _e; try { for (_i = _i.call(arr); !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
 
@@ -5484,13 +5854,13 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   var keys$3 = Object.keys;
   var vals$1 = Object.values;
 
-  function fill$2(self, params) {
+  function fill$1(self, params) {
     return reducekv$b(function (memo, key, value) {
       var _value, _params, _p$fill, _p, _params2, _fill;
 
-      return assoc$9(memo, key, (_value = value, branch(isString, (_p = p$1, _p$fill = _p.fill, _params = params, function fill(_argPlaceholder) {
+      return assoc$a(memo, key, (_value = value, branch(isString, (_p = p, _p$fill = _p.fill, _params = params, function fill(_argPlaceholder) {
         return _p$fill.call(_p, _argPlaceholder, _params);
-      }), isObject, (_fill = fill$2, _params2 = params, function fill(_argPlaceholder2) {
+      }), isObject, (_fill = fill$1, _params2 = params, function fill(_argPlaceholder2) {
         return _fill(_argPlaceholder2, _params2);
       }), identity)(_value)));
     }, {}, self);
@@ -5513,7 +5883,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     }, {}, maps);
   }
 
-  function blank$2(self) {
+  function blank$1(self) {
     return keys$3(self).length === 0;
   }
 
@@ -5529,11 +5899,11 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
 
   function compact2(self, pred) {
     return reducekv$b(function (memo, key, value) {
-      return pred([key, value]) ? memo : assoc$9(memo, key, value);
+      return pred([key, value]) ? memo : assoc$a(memo, key, value);
     }, {}, self);
   }
 
-  var compact$1 = overload(null, compact1, compact2);
+  var compact = overload(null, compact1, compact2);
 
   function omit(self, entry) {
     var key$1 = key(entry);
@@ -5568,7 +5938,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     }, true, keys$b(self));
   }
 
-  function find$2(self, key) {
+  function find$1(self, key) {
     return contains$1(self, key) ? [key, lookup$3(self, key)] : null;
   }
 
@@ -5607,7 +5977,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   }
 
   function dissoc$1(self, key) {
-    if (contains$9(self, key)) {
+    if (contains$a(self, key)) {
       var result = clone$1(self);
       delete result[key];
       return result;
@@ -5665,20 +6035,20 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   }
 
   var behave$a = does(implement(ITemplate, {
-    fill: fill$2
+    fill: fill$1
   }), implement(IBlankable, {
-    blank: blank$2
+    blank: blank$1
   }), implement(IMergable, {
     merge: merge$1
   }), implement(ICompactible, {
-    compact: compact$1
+    compact: compact
   }), implement(IEquiv, {
     equiv: equiv$2
   }), implement(ICoercible, {
     toArray: toArray$3,
     toObject: identity
   }), implement(IFind, {
-    find: find$2
+    find: find$1
   }), implement(IOmissible, {
     omit: omit
   }), implement(IInclusive, {
@@ -5740,12 +6110,12 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     }
   }
 
-  function fork$4(self, reject, resolve) {
+  function fork$3(self, reject, resolve) {
     return resolve(self);
   }
 
   var behave$9 = does(implement(IForkable, {
-    fork: fork$4
+    fork: fork$3
   }), implement(IFunctor, {
     fmap: fmap$3
   }));
@@ -5767,7 +6137,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     return into({}, self);
   }
 
-  function find$1(self, key) {
+  function find(self, key) {
     return includes$9(keys$b(self), key) ? [key, get(self.obj, key)] : null;
   }
 
@@ -5822,7 +6192,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   var behave$8 = does(iequiv, implement(ICoercible, {
     toObject: toObject
   }), implement(IFind, {
-    find: find$1
+    find: find
   }), implement(IMap, {
     dissoc: dissoc,
     keys: keys$2,
@@ -5890,7 +6260,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     return take(n, split2(self, step));
   }
 
-  var split$2 = overload(null, null, split2, split3$1);
+  var split$1 = overload(null, null, split2, split3$1);
 
   function add(self, dur) {
     var _ref, _self, _dur, _p$add, _p;
@@ -5934,7 +6304,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   }
 
   var behave$7 = does(emptyable, implement(ISplittable, {
-    split: split$2
+    split: split$1
   }), implement(IAddable, {
     add: add
   }), implement(IMergable, {
@@ -5963,12 +6333,6 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     return self instanceof Promise$1;
   }
 
-  function fork2(self, resolve) {
-    return IForkable.fork(self, noop, resolve);
-  }
-
-  var fork$3 = overload(null, null, fork2, IForkable.fork);
-
   function awaits(f) {
     return function () {
       for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
@@ -5986,7 +6350,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   }
   function fromTask(task) {
     return new Promise$1(function (resolve, reject) {
-      fork$3(task, reject, resolve);
+      fork$6(task, reject, resolve);
     });
   }
   Promise$1.fromTask = fromTask;
@@ -5999,14 +6363,14 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     return self.then(resolve, reject);
   }
 
-  function otherwise$2(self, other) {
+  function otherwise$1(self, other) {
     return fmap$2(self, function (value) {
       return value == null ? other : value;
     });
   }
 
   var behave$6 = does(implement(IOtherwise, {
-    otherwise: otherwise$2
+    otherwise: otherwise$1
   }), implement(IForkable, {
     fork: fork$2
   }), implement(IFunctor, {
@@ -6145,13 +6509,9 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
 
   behave$5(Range);
 
-  var record = behave$t;
+  var record = behave$u;
 
   behave$5(Recurrence);
-
-  function isRegExp(self) {
-    return self.constructor === RegExp;
-  }
 
   var test = unbind(RegExp.prototype.test);
   function reFind(re, s) {
@@ -6229,7 +6589,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     return right(f(self.value));
   }
 
-  function otherwise$1(self, other) {
+  function otherwise(self, other) {
     return self.value;
   }
 
@@ -6246,16 +6606,12 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   }), implement(IForkable, {
     fork: fork$1
   }), implement(IOtherwise, {
-    otherwise: otherwise$1
+    otherwise: otherwise
   }), implement(IFunctor, {
     fmap: fmap$1
   }));
 
   behave$4(Right);
-
-  var append$1 = overload(null, identity, IAppendable.append, reducing(IAppendable.append));
-
-  var prepend$2 = overload(null, identity, IPrependable.prepend, reducing(IPrependable.prepend, reverse$4));
 
   function seq$1(self) {
     return seq$a(self.items);
@@ -6358,15 +6714,15 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     return parts;
   }
 
-  var split$1 = overload(null, split1, unbind(String.prototype.split), split3);
+  var split = overload(null, split1, unbind(String.prototype.split), split3);
 
-  function fill$1(self, params) {
+  function fill(self, params) {
     return reducekv$b(function (text, key, value) {
       return replace(text, new RegExp("\\{" + key + "\\}", 'ig'), value);
     }, self, params);
   }
 
-  function blank$1(self) {
+  function blank(self) {
     return self.trim().length === 0;
   }
 
@@ -6428,18 +6784,18 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     return unreduced(memo);
   }
 
-  function matches$1(self, re) {
+  function matches(self, re) {
     return rePattern(re).test(self);
   }
 
   var behave$3 = does(iindexed, implement(ISplittable, {
-    split: split$1
+    split: split
   }), implement(IBlankable, {
-    blank: blank$1
+    blank: blank
   }), implement(ITemplate, {
-    fill: fill$1
+    fill: fill
   }), implement(IMatchable, {
-    matches: matches$1
+    matches: matches
   }), implement(ICollection, {
     conj: conj
   }), implement(IReduce, {
@@ -6503,10 +6859,10 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     });
   }
 
-  function chain$1(self, f) {
+  function chain(self, f) {
     return task(function (reject, resolve) {
       self.fork(reject, function (value) {
-        fork$3(f(value), reject, resolve);
+        fork$6(f(value), reject, resolve);
       });
     });
   }
@@ -6516,7 +6872,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   }
 
   var behave$2 = does(implement(IChainable, {
-    chain: chain$1
+    chain: chain
   }), implement(IForkable, {
     fork: fork
   }), implement(IFunctor, {
@@ -6570,278 +6926,6 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     WeakMap: behave$1
   });
   behave$1(WeakMap);
-
-  var blank = IBlankable.blank;
-  function blot(self) {
-    return blank(self) ? null : self;
-  }
-
-  var chain = IChainable.chain;
-
-  function compact(self) {
-    return satisfies(ICompactible, self) ? ICompactible.compact(self) : filter(identity, self);
-  }
-  var only = unspread(compact);
-
-  var dispose = IDisposable.dispose;
-
-  var find = IFind.find;
-
-  var handles = IHandler.handles;
-
-  var identifier = IIdentifiable.identifier;
-
-  function afterN(self) {
-    var ref = self;
-
-    for (var _len = arguments.length, els = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-      els[_key - 1] = arguments[_key];
-    }
-
-    while (els.length) {
-      var el = els.shift();
-      IInsertable.after(ref, el);
-      ref = el;
-    }
-  }
-
-  var after = overload(null, identity, IInsertable.after, afterN);
-
-  function beforeN(self) {
-    var ref = self;
-
-    for (var _len2 = arguments.length, els = new Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
-      els[_key2 - 1] = arguments[_key2];
-    }
-
-    while (els.length) {
-      var el = els.pop();
-      IInsertable.before(ref, el);
-      ref = el;
-    }
-  }
-
-  var before = overload(null, identity, IInsertable.before, beforeN);
-
-  function checkPattern(_, pattern) {
-    return isString(pattern) || isRegExp(pattern);
-  }
-
-  var matches = pre(IMatchable.matches, checkPattern);
-
-  var otherwise = IOtherwise.otherwise;
-
-  var reset = IReset.reset;
-
-  var send = ISend.send;
-
-  var _ISet$unite, _reduce;
-  var disj = overload(null, identity, ISet.disj, reducing(ISet.disj));
-  var union2 = (_reduce = reduce$f, _ISet$unite = ISet.unite, function reduce(_argPlaceholder, _argPlaceholder2) {
-    return _reduce(_ISet$unite, _argPlaceholder, _argPlaceholder2);
-  });
-
-  function intersection2(xs, ys) {
-    return reduce$f(function (memo, x) {
-      return includes$9(ys, x) ? conj$8(memo, x) : memo;
-    }, empty$1(xs), xs);
-  }
-
-  function difference2(xs, ys) {
-    return reduce$f(function (memo, x) {
-      return includes$9(ys, x) ? memo : conj$8(memo, x);
-    }, empty$1(xs), xs);
-  }
-
-  function subset(self, other) {
-    var _other, _includes;
-
-    return every((_includes = includes$9, _other = other, function includes(_argPlaceholder3) {
-      return _includes(_other, _argPlaceholder3);
-    }), self);
-  }
-  function superset(self, other) {
-    return subset(other, self);
-  }
-  var unite = overload(null, null, ISet.unite, reducing(ISet.unite));
-  var union = overload(null, identity, union2, reducing(union2));
-  var intersection = overload(null, null, intersection2, reducing(intersection2));
-  var difference = overload(null, null, difference2, reducing(difference2));
-
-  var state = IStateMachine.state;
-  var transition = IStateMachine.transition;
-  var transitions = IStateMachine.transitions;
-
-  var split = ISplittable.split;
-
-  function _toConsumableArray$1(arr) { return _arrayWithoutHoles$1(arr) || _iterableToArray$1(arr) || _unsupportedIterableToArray$1(arr) || _nonIterableSpread$1(); }
-
-  function _nonIterableSpread$1() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
-
-  function _unsupportedIterableToArray$1(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$1(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$1(o, minLen); }
-
-  function _iterableToArray$1(iter) { if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null) return Array.from(iter); }
-
-  function _arrayWithoutHoles$1(arr) { if (Array.isArray(arr)) return _arrayLikeToArray$1(arr); }
-
-  function _arrayLikeToArray$1(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
-
-  function swap3(self, f, a) {
-    return ISwap.swap(self, function (state) {
-      return f(state, a);
-    });
-  }
-
-  function swap4(self, f, a, b) {
-    return ISwap.swap(self, function (state) {
-      return f(state, a, b);
-    });
-  }
-
-  function swapN(self, f, a, b, cs) {
-    return ISwap.swap(self, function (state) {
-      return f.apply(null, [state, a, b].concat(_toConsumableArray$1(cs)));
-    });
-  }
-
-  var swap = overload(null, null, ISwap.swap, swap3, swap4, swapN);
-
-  var fill = ITemplate.fill;
-  function template(self) {
-    for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-      args[_key - 1] = arguments[_key];
-    }
-
-    return fill(self, args);
-  }
-
-  var p = /*#__PURE__*/Object.freeze({
-    __proto__: null,
-    directed: directed,
-    steps: steps,
-    subtract: subtract,
-    add: add$3,
-    inc: inc,
-    dec: dec,
-    append: append$1,
-    assoc: assoc$9,
-    assocIn: assocIn,
-    update: update,
-    contains: contains$9,
-    updateIn: updateIn,
-    rewrite: rewrite,
-    prop: prop,
-    patch: patch,
-    blank: blank,
-    blot: blot,
-    start: start$2,
-    end: end$2,
-    inside: inside,
-    between: between,
-    overlap: overlap,
-    chain: chain,
-    clone: clone$5,
-    toArray: toArray$7,
-    toObject: toObject$3,
-    toPromise: toPromise,
-    toDuration: toDuration$1,
-    conj: conj$8,
-    unconj: unconj$1,
-    compact: compact,
-    only: only,
-    compare: compare$6,
-    lt: lt,
-    lte: lte,
-    gt: gt,
-    gte: gte,
-    inverse: inverse$1,
-    count: count$d,
-    deref: deref$7,
-    dispose: dispose,
-    divide: divide$2,
-    empty: empty$1,
-    equiv: equiv$9,
-    alike: alike,
-    equivalent: equivalent,
-    eq: eq,
-    notEq: notEq,
-    find: find,
-    invoke: invoke,
-    fork: fork$3,
-    fmap: fmap$a,
-    thrush: thrush,
-    pipeline: pipeline,
-    handles: handles,
-    downward: downward,
-    upward: upward,
-    root: root$2,
-    parent: parent$1,
-    parents: parents$2,
-    closest: closest$2,
-    ancestors: ancestors,
-    children: children$1,
-    descendants: descendants$1,
-    nextSibling: nextSibling$2,
-    prevSibling: prevSibling$2,
-    nextSiblings: nextSiblings$2,
-    prevSiblings: prevSiblings$2,
-    siblings: siblings$2,
-    leaves: leaves,
-    asLeaves: asLeaves,
-    identifier: identifier,
-    nth: nth$6,
-    idx: idx$3,
-    includes: includes$9,
-    excludes: excludes,
-    transpose: transpose,
-    after: after,
-    before: before,
-    reducekv2: reducekv2,
-    reducekv3: reducekv3,
-    reducekv: reducekv$b,
-    get: get,
-    getIn: getIn,
-    keys: keys$b,
-    vals: vals$6,
-    dissoc: dissoc$6,
-    key: key,
-    val: val,
-    matches: matches,
-    merge: merge$4,
-    mult: mult$2,
-    name: name$1,
-    type: type,
-    what: what,
-    naming: naming,
-    next: next$a,
-    otherwise: otherwise,
-    path: path$1,
-    prepend: prepend$2,
-    reduce: reduce$f,
-    reducing: reducing,
-    reset: reset,
-    reverse: reverse$4,
-    send: send,
-    first: first$d,
-    rest: rest$d,
-    second: second$2,
-    seq: seq$a,
-    disj: disj,
-    subset: subset,
-    superset: superset,
-    unite: unite,
-    union: union,
-    intersection: intersection,
-    difference: difference,
-    state: state,
-    transition: transition,
-    transitions: transitions,
-    split: split,
-    swap: swap,
-    fill: fill,
-    template: template,
-    omit: omit$3
-  });
 
   function keys$1(self) {
     return self.keys();
@@ -6939,7 +7023,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
 
     var behavior = mapa(function (protocol) {
       return implement(protocol, reduce$f(function (memo, key) {
-        return assoc$9(memo, key, fwd(protocol[key]));
+        return assoc$a(memo, key, fwd(protocol[key]));
       }, {}, keys$b(protocol)));
     }, protocols);
     return does.apply(void 0, _toConsumableArray(behavior));
@@ -7118,18 +7202,18 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   function impart(self, f) {
     //set retraction to identity to curb retraction overhead
     return reducekv$b(function (memo, key, value) {
-      return assoc$9(memo, key, isNotConstructor(value) ? f(value) : value);
+      return assoc$a(memo, key, isNotConstructor(value) ? f(value) : value);
     }, {}, self);
   }
 
   function include2(self, value) {
     var _value, _p$conj, _p, _value2, _p$omit, _p2, _value3, _p$includes, _p3;
 
-    return toggles((_p = p, _p$conj = _p.conj, _value = value, function conj(_argPlaceholder10) {
+    return toggles((_p = p$2, _p$conj = _p.conj, _value = value, function conj(_argPlaceholder10) {
       return _p$conj.call(_p, _argPlaceholder10, _value);
-    }), (_p2 = p, _p$omit = _p2.omit, _value2 = value, function omit(_argPlaceholder11) {
+    }), (_p2 = p$2, _p$omit = _p2.omit, _value2 = value, function omit(_argPlaceholder11) {
       return _p$omit.call(_p2, _argPlaceholder11, _value2);
-    }), (_p3 = p, _p$includes = _p3.includes, _value3 = value, function includes(_argPlaceholder12) {
+    }), (_p3 = p$2, _p$includes = _p3.includes, _value3 = value, function includes(_argPlaceholder12) {
       return _p$includes.call(_p3, _argPlaceholder12, _value3);
     }), self);
   }
@@ -7137,11 +7221,11 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   function include3(self, value, want) {
     var _value4, _p$conj2, _p4, _value5, _p$omit2, _p5, _value6, _p$includes2, _p6;
 
-    return toggles((_p4 = p, _p$conj2 = _p4.conj, _value4 = value, function conj(_argPlaceholder13) {
+    return toggles((_p4 = p$2, _p$conj2 = _p4.conj, _value4 = value, function conj(_argPlaceholder13) {
       return _p$conj2.call(_p4, _argPlaceholder13, _value4);
-    }), (_p5 = p, _p$omit2 = _p5.omit, _value5 = value, function omit(_argPlaceholder14) {
+    }), (_p5 = p$2, _p$omit2 = _p5.omit, _value5 = value, function omit(_argPlaceholder14) {
       return _p$omit2.call(_p5, _argPlaceholder14, _value5);
-    }), (_p6 = p, _p$includes2 = _p6.includes, _value6 = value, function includes(_argPlaceholder15) {
+    }), (_p6 = p$2, _p$includes2 = _p6.includes, _value6 = value, function includes(_argPlaceholder15) {
       return _p$includes2.call(_p6, _argPlaceholder15, _value6);
     }), self, want);
   }
@@ -7251,7 +7335,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
         absorbed = value;
       }
 
-      return assoc$9(memo, key, absorbed);
+      return assoc$a(memo, key, absorbed);
     }, tgt, src || empty$1(tgt));
   }
 
@@ -7309,6 +7393,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   exports.IReduce = IReduce;
   exports.IReset = IReset;
   exports.IReversible = IReversible;
+  exports.IRevertible = IRevertible;
   exports.ISend = ISend;
   exports.ISeq = ISeq;
   exports.ISeqable = ISeqable;
@@ -7320,6 +7405,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   exports.ITemplate = ITemplate;
   exports.Indexed = Indexed;
   exports.IndexedSeq = IndexedSeq;
+  exports.Journal = Journal;
   exports.LazySeq = LazySeq;
   exports.Left = Left;
   exports.Lens = Lens;
@@ -7355,7 +7441,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   exports.array = array;
   exports.asLeaves = asLeaves;
   exports.asc = asc;
-  exports.assoc = assoc$9;
+  exports.assoc = assoc$a;
   exports.assocIn = assocIn;
   exports.associativeSubset = associativeSubset;
   exports.assume = assume;
@@ -7370,7 +7456,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   exports.best = best;
   exports.between = between;
   exports.binary = binary;
-  exports.blank = blank;
+  exports.blank = blank$2;
   exports.blot = blot;
   exports.bool = bool;
   exports.boolean = _boolean;
@@ -7380,7 +7466,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   exports.butlast = butlast;
   exports.called = called;
   exports.camelToDashed = camelToDashed;
-  exports.chain = chain;
+  exports.chain = chain$1;
   exports.children = children$1;
   exports.clamp = clamp;
   exports.cleanly = cleanly;
@@ -7390,7 +7476,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   exports.coalesce = coalesce;
   exports.collapse = collapse;
   exports.comp = comp;
-  exports.compact = compact;
+  exports.compact = compact$1;
   exports.compare = compare$6;
   exports.compile = compile;
   exports.complement = complement;
@@ -7402,7 +7488,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   exports.constantly = constantly;
   exports.construct = construct;
   exports.constructs = constructs;
-  exports.contains = contains$9;
+  exports.contains = contains$a;
   exports.count = count$d;
   exports.countBy = countBy;
   exports.curry = curry;
@@ -7474,23 +7560,24 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   exports.expands = expands;
   exports.extend = extend;
   exports.factory = factory;
-  exports.fill = fill;
+  exports.fill = fill$2;
   exports.filled = filled;
   exports.filter = filter;
   exports.filtera = filtera;
-  exports.find = find;
+  exports.find = find$2;
   exports.first = first$d;
   exports.flatten = flatten;
   exports.flip = flip;
   exports.float = _float;
   exports.fluent = fluent;
+  exports.flush = flush$1;
   exports.fmap = fmap$a;
   exports.fmt = fmt;
   exports.fnil = fnil;
   exports.fold = fold;
   exports.folding = folding;
   exports.foldkv = foldkv;
-  exports.fork = fork$3;
+  exports.fork = fork$6;
   exports.forward = forward;
   exports.forwardTo = forwardTo;
   exports.fromQueryString = fromQueryString;
@@ -7580,6 +7667,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   exports.iterable = iterable;
   exports.iterate = iterate$1;
   exports.join = join;
+  exports.journal = journal;
   exports.just = just;
   exports.juxt = juxt;
   exports.juxtVals = juxtVals;
@@ -7614,7 +7702,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   exports.mapcat = mapcat;
   exports.mapkv = mapkv;
   exports.mapvk = mapvk;
-  exports.matches = matches;
+  exports.matches = matches$1;
   exports.max = max;
   exports.maxKey = maxKey;
   exports.maybe = maybe;
@@ -7666,7 +7754,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   exports.only = only;
   exports.opt = opt;
   exports.or = or;
-  exports.otherwise = otherwise;
+  exports.otherwise = otherwise$3;
   exports.overlap = overlap;
   exports.overload = overload;
   exports.parent = parent$1;
@@ -7717,6 +7805,8 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   exports.recurrence = recurrence;
   exports.recurrence1 = recurrence1;
   exports.recurs = recurs;
+  exports.redo = redo$1;
+  exports.redoable = redoable$1;
   exports.reduce = reduce$f;
   exports.reduced = reduced$1;
   exports.reducekv = reducekv$b;
@@ -7729,7 +7819,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   exports.repeat = repeat;
   exports.repeatedly = repeatedly;
   exports.replace = replace;
-  exports.reset = reset;
+  exports.reset = reset$1;
   exports.rest = rest$d;
   exports.revSeq = revSeq;
   exports.reverse = reverse$4;
@@ -7763,7 +7853,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   exports.soy = soy;
   exports.specify = specify;
   exports.splice = splice;
-  exports.split = split;
+  exports.split = split$2;
   exports.splitAt = splitAt;
   exports.splitWith = splitWith;
   exports.spread = spread;
@@ -7779,7 +7869,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   exports.subtract = subtract;
   exports.sum = sum;
   exports.superset = superset;
-  exports.swap = swap;
+  exports.swap = swap$1;
   exports.take = take;
   exports.takeLast = takeLast;
   exports.takeNth = takeNth;
@@ -7810,6 +7900,8 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   exports.unary = unary;
   exports.unbind = unbind;
   exports.unconj = unconj$1;
+  exports.undo = undo$1;
+  exports.undoable = undoable$1;
   exports.union = union;
   exports.unique = unique;
   exports.unite = unite;
