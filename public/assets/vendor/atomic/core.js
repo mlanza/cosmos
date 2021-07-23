@@ -1056,12 +1056,12 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     fork: fork$9
   });
 
-  function fmap$b(self, f) {
+  function fmap$c(self, f) {
     return f(self);
   }
 
   var IFunctor = protocol({
-    fmap: fmap$b
+    fmap: fmap$c
   });
 
   var IHandler = protocol({
@@ -1934,15 +1934,15 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
 
   behave$w(Nil);
 
-  var deref$7 = IDeref.deref;
+  var deref$8 = IDeref.deref;
 
-  var fmap$a = overload(constantly(identity), IFunctor.fmap, reducing(IFunctor.fmap));
+  var fmap$b = overload(constantly(identity), IFunctor.fmap, reducing(IFunctor.fmap));
   function thrush(unit, init) {
     for (var _len = arguments.length, fs = new Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
       fs[_key - 2] = arguments[_key];
     }
 
-    return deref$7(reduce$f(IFunctor.fmap, unit(init), fs));
+    return deref$8(reduce$f(IFunctor.fmap, unit(init), fs));
   }
 
   function pipeline1(unit) {
@@ -3053,12 +3053,12 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     return isReduced(self) ? self.valueOf() : self;
   }
 
-  function deref$6(self) {
+  function deref$7(self) {
     return self.valueOf();
   }
 
   var behave$v = does(implement(IDeref, {
-    deref: deref$6
+    deref: deref$7
   }));
 
   behave$v(Reduced);
@@ -3071,7 +3071,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
 
   var compact$2 = overload(null, compact1$1, compact2$1);
 
-  function fmap$9(self, f) {
+  function fmap$a(self, f) {
     return map(f, self);
   }
 
@@ -3240,7 +3240,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   }), implement(IOmissible, {
     omit: omit$2
   }), implement(IFunctor, {
-    fmap: fmap$9
+    fmap: fmap$a
   }), implement(ICollection, {
     conj: conj$6
   }), implement(ICoercible, {
@@ -3971,7 +3971,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     }, {});
   }
 
-  function fmap$8(self, f) {
+  function fmap$9(self, f) {
     return mapa(f, self);
   }
 
@@ -3994,7 +3994,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     before: before$1,
     after: after$1
   }), implement(IFunctor, {
-    fmap: fmap$8
+    fmap: fmap$9
   }), implement(ICoercible, {
     toObject: toObject$1,
     toArray: identity
@@ -4545,12 +4545,12 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   var merge$2 = partial(mergeWith, add$3);
 
   function mult(self, n) {
-    return fmap$7(self, function (value) {
+    return fmap$8(self, function (value) {
       return value * n;
     });
   }
 
-  function fmap$7(self, f) {
+  function fmap$8(self, f) {
     return new self.constructor(reducekv$4(self, function (memo, key, value) {
       return assoc$a(memo, key, f(value));
     }, {}));
@@ -4595,7 +4595,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   }), implement(IMergable, {
     merge: merge$2
   }), implement(IFunctor, {
-    fmap: fmap$7
+    fmap: fmap$8
   }), implement(IAssociative, {
     assoc: assoc$5,
     contains: contains$5
@@ -4728,11 +4728,11 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   }
 
   function equiv$5(self, other) {
-    return other != null && deref$5(self) === deref$7(other);
+    return other != null && deref$6(self) === deref$8(other);
   }
 
   function compare$3(self, other) {
-    return other == null ? -1 : deref$5(self) - deref$7(other);
+    return other == null ? -1 : deref$6(self) - deref$8(other);
   }
 
   function reduce$5(self, f, init) {
@@ -4752,14 +4752,14 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     }, init);
   }
 
-  function deref$5(self) {
+  function deref$6(self) {
     return self.valueOf();
   }
 
   var behave$m = does(implement(IAddable, {
     add: add$1
   }), implement(IDeref, {
-    deref: deref$5
+    deref: deref$6
   }), implement(IBounds, {
     start: identity,
     end: identity
@@ -4821,18 +4821,18 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
 
   var fluent = overload(null, fluent1, partial(thrush, fluent1));
 
-  function fmap$6(self, f) {
+  function fmap$7(self, f) {
     return fluent(f(self.value) || self.value);
   }
 
-  function deref$4(self) {
+  function deref$5(self) {
     return self.value;
   }
 
   var behave$k = does(implement(IDeref, {
-    deref: deref$4
+    deref: deref$5
   }), implement(IFunctor, {
-    fmap: fmap$6
+    fmap: fmap$7
   }));
 
   behave$k(Fluent);
@@ -5097,7 +5097,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   function leaves(self) {
     return remove$1(comp(count$d, children$1), descendants$1(self));
   }
-  var asLeaves = comp((_map = map, _juxt = juxt(path$1, deref$7), function map(_argPlaceholder) {
+  var asLeaves = comp((_map = map, _juxt = juxt(path$1, deref$8), function map(_argPlaceholder) {
     return _map(_juxt, _argPlaceholder);
   }), leaves, lens);
 
@@ -5283,7 +5283,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     gte: gte,
     inverse: inverse$1,
     count: count$d,
-    deref: deref$7,
+    deref: deref$8,
     dispose: dispose,
     divide: divide$2,
     empty: empty$1,
@@ -5295,7 +5295,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     find: find$2,
     invoke: invoke,
     fork: fork$6,
-    fmap: fmap$a,
+    fmap: fmap$b,
     thrush: thrush,
     pipeline: pipeline,
     handles: handles,
@@ -5396,8 +5396,11 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   }
 
   function assoc$3(self, key, value) {
-    var revised = assoc$a(self.state, key, value);
-    return new Journal(0, self.max, prepend$2(self.history, revised), revised);
+    var _key, _value, _p$assoc, _p;
+
+    return fmap$6(self, (_p = p$2, _p$assoc = _p.assoc, _key = key, _value = value, function assoc(_argPlaceholder) {
+      return _p$assoc.call(_p, _argPlaceholder, _key, _value);
+    }));
   }
 
   function contains$3(self, key) {
@@ -5408,7 +5411,20 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     return get(nth$6(self.history, self.pos), key);
   }
 
-  var behave$f = does(implement(ILookup, {
+  function deref$4(self) {
+    return self.state;
+  }
+
+  function fmap$6(self, f) {
+    var revised = f(self.state);
+    return new Journal(0, self.max, prepend$2(self.pos ? slice(self.history, self.pos) : self.history, revised), revised);
+  }
+
+  var behave$f = does(implement(IDeref, {
+    deref: deref$4
+  }), implement(IFunctor, {
+    fmap: fmap$6
+  }), implement(ILookup, {
     lookup: lookup$5
   }), implement(IAssociative, {
     assoc: assoc$3,
@@ -6340,7 +6356,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
       }
 
       if (detect(isPromise, args)) {
-        return fmap$a(Promise$1.all(args), function (args) {
+        return fmap$b(Promise$1.all(args), function (args) {
           return f.apply(this, args);
         });
       } else {
@@ -7091,8 +7107,8 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     }
 
     return mapa(function (unit) {
-      var n = fmap$a(divide$2(memo, unit), Math.floor);
-      memo = subtract(memo, fmap$a(unit, constantly(n)));
+      var n = fmap$b(divide$2(memo, unit), Math.floor);
+      memo = subtract(memo, fmap$b(unit, constantly(n)));
       return n;
     }, units);
   }
@@ -7502,7 +7518,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   exports.dedupe = dedupe;
   exports.defaults = defaults;
   exports.deferring = deferring;
-  exports.deref = deref$7;
+  exports.deref = deref$8;
   exports.desc = desc;
   exports.descendants = descendants$1;
   exports.descriptive = descriptive$1;
@@ -7571,7 +7587,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   exports.float = _float;
   exports.fluent = fluent;
   exports.flush = flush$1;
-  exports.fmap = fmap$a;
+  exports.fmap = fmap$b;
   exports.fmt = fmt;
   exports.fnil = fnil;
   exports.fold = fold;
