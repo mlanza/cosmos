@@ -377,7 +377,9 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
   (function(){
 
     function handle(self, event, next){
-      w.load(self.buffer, _.get(event, "args")); //TODO ITransientBuffer.load
+      _.swap(self.buffer, function(buffer){
+        return w.load(buffer, _.get(event, "args")); //TODO ITransientBuffer.load
+      });
       next(event);
     }
 
@@ -407,8 +409,9 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
 
   })();
 
-  function AddedHandler(model, buffer, commandBus){
+  function AddedHandler(model, repo, buffer, commandBus){
     this.model = model;
+    this.repo = repo;
     this.buffer = buffer;
     this.commandBus = commandBus;
   }
@@ -422,7 +425,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
           type = _.getIn(event, ["args", 0]),
           title = _.getIn(event, ["args", 1]);
 
-      var added = ont.make(self.buffer, {id: _.str(id), $type: type});
+      var added = ont.make(self.repo, {id: _.str(id), $type: type});
       //TODO move default determination as attributes to the command where the event is computed
       //TODO expose `make` further down?
       var entity = _.reduce(function(memo, key){
@@ -599,7 +602,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
   function journalsCommand(able, event){
 
     function handle(self, command, next){
-      if (able(self.buffer)){
+      if (able(_.deref(self.state))){
         $.raise(self.provider, event);
       }
       next(command);
@@ -613,7 +616,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
   function journalsEvent(effect){
 
     function handle(self, event, next){
-      effect(self.buffer);
+      _.swap(self.state, effect);
       next(event);
     }
 
@@ -622,9 +625,8 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
 
   }
 
-
-  function UndoHandler(buffer, provider){
-    this.buffer = buffer;
+  function UndoHandler(state, provider){
+    this.state = state;
     this.provider = provider;
   }
 
@@ -633,8 +635,8 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
   _.doto(UndoHandler,
     journalsCommand(IRevertible.undoable, e.undone()));
 
-  function UndoneHandler(buffer){
-    this.buffer = buffer;
+  function UndoneHandler(state){
+    this.state = state;
   }
 
   var undoneHandler = _.constructs(UndoneHandler);
@@ -642,8 +644,8 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
   _.doto(UndoneHandler,
     journalsEvent(IRevertible.undo));
 
-  function RedoHandler(buffer, provider){
-    this.buffer = buffer;
+  function RedoHandler(state, provider){
+    this.state = state;
     this.provider = provider;
   }
 
@@ -652,8 +654,8 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
   _.doto(RedoHandler,
     journalsCommand(IRevertible.redoable, e.redone()));
 
-  function RedoneHandler(buffer, provider){
-    this.buffer = buffer;
+  function RedoneHandler(state, provider){
+    this.state = state;
     this.provider = provider;
   }
 
@@ -662,8 +664,8 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
   _.doto(RedoneHandler,
     journalsEvent(IRevertible.redo));
 
-  function FlushHandler(buffer, provider){
-    this.buffer = buffer;
+  function FlushHandler(state, provider){
+    this.state = state;
     this.provider = provider;
   }
 
@@ -672,8 +674,8 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
   _.doto(FlushHandler,
     journalsCommand(_.constantly(true), e.flushed()));
 
-  function FlushedHandler(buffer, provider){
-    this.buffer = buffer;
+  function FlushedHandler(state, provider){
+    this.state = state;
     this.provider = provider;
   }
 
@@ -829,8 +831,8 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
 
   })();
 
-  function QueryHandler(buffer, provider){
-    this.buffer = buffer;
+  function QueryHandler(repo, provider){
+    this.repo = repo;
     this.provider = provider;
   }
 
@@ -839,7 +841,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
   (function(){
 
     function handle(self, command, next){
-      return _.fmap(repos.query(self.buffer, _.get(command, "plan")), function(entities){
+      return _.fmap(repos.query(self.repo, _.get(command, "plan")), function(entities){
         $.raise(self.provider, e.queried(entities));
         next(command);
       });
@@ -879,7 +881,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
 
     function handle(self, command, next){
       var id = _.get(command, "id");
-      var missing = _.detect(_.complement(_.contains(self.buffer, _)), id);
+      var missing = _.detect(_.complement(_.contains(_.deref(self.buffer), _)), id);
       if (!missing) {
         $.raise(self.provider, e.selected([], {id: id}));
       } else {
@@ -981,7 +983,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
 
   (function(){
     function handle(self, event, next){
-      _.just(self.model.state.selected, _.toArray, _.mapa(_.get(self.buffer, _), _), _.see("peeked"));
+      _.just(_.deref(self.model).selected, _.toArray, _.mapa(_.get(_.deref(self.buffer), _), _), _.see("peeked"));
       next(event);
     }
 
@@ -1040,11 +1042,10 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
       if (!_.contains(message, "id") && self.pred(message)) {
         var f = _.just(self.model, _.deref, _.get(_, "find"));
         if (f) {
-          var id = _.just(self.buffer.workspace, //TODO demeter!
-            _.deref,
-            _.into([], _.comp(f, t.map(_.get(_, "id")), t.map(_.first)), _),
-            _.assoc(message, "id", _),
-            next);
+          var buffer = _.deref(self.buffer);
+          var id = _.into([], _.comp(f, t.map(_.get(_, "id")), t.map(_.first)), buffer);
+          var select = _.assoc(message, "id", id);
+          next(select);
           return;
         }
       }
@@ -1075,9 +1076,28 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
 
   })();
 
+  function Cursor(source){
+    this.source = source;
+  }
+
+  function deref(self){
+    return _.just(self.source, _.deref, _.deref);
+  }
+
+  function swap(self, f){
+    _.swap(self.source, _.fmap(_, f));
+  }
+
+  var cursor = _.constructs(Cursor);
+
+  _.doto(Cursor,
+    _.implement(_.IDeref, {deref: deref}),
+    _.implement(_.ISwap, {swap: swap}));
+
   //NOTE a view is capable of returning a seq of all possible `IView.interactions` each implementing `IIdentifiable` and `INamable`.
   //NOTE an interaction is a persistent, validatable object with field schema.  It will be flagged as command or query which will help with processing esp. pipelining.  When successfully validated it has all that it needs to be handled by the handler.  That it can be introspected allows for the UI to help will completing them.
-  function Outline(buffer, model, commandBus, eventBus, emitter, options){
+  function Outline(repo, buffer, model, commandBus, eventBus, emitter, options){
+    this.repo = repo;
     this.buffer = buffer;
     this.model = model;
     this.commandBus = commandBus;
@@ -1086,16 +1106,19 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     this.options = options;
   }
 
-  function outline(buffer, options){
-    var model = $.cell({
+  function outline(repo, workspace, options){
+    var $state = $.cell(_.journal({
+          workspace: workspace,
           root: options.root, //identify the root entities from where rendering begins
           selected: _.into(imm.set(), options.selected || []), //track which entities are selected
           expanded: _.into(imm.set(), options.expanded || []) //track which entities are expanded vs collapsed
-        }),
+        })),
+        model = cursor($state),
         events = $.events(),
         commandBus = sh.bus(),
         eventBus = sh.bus(),
-        emitter = $.subject();
+        emitter = $.subject(),
+        buffer = $.cursor(model, ["workspace"]);
 
     var entityDriven = _.comp(_.includes(["assert", "retract", "toggle", "destroy", "cast", "tag", "untag", "select", "deselect"], _), _.identifier);
 
@@ -1116,9 +1139,9 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
           mut.assoc(_, "load", loadHandler(buffer, events)),
           mut.assoc(_, "add", addHandler(buffer, events)),
           mut.assoc(_, "save", saveHandler(buffer, events)),
-          mut.assoc(_, "undo", undoHandler(buffer, events)),
-          mut.assoc(_, "redo", redoHandler(buffer, events)),
-          mut.assoc(_, "flush", flushHandler(buffer, events)),
+          mut.assoc(_, "undo", undoHandler($state, events)),
+          mut.assoc(_, "redo", redoHandler($state, events)),
+          mut.assoc(_, "flush", flushHandler($state, events)),
           mut.assoc(_, "cast", castHandler(buffer, events)),
           mut.assoc(_, "tag", tagHandler(commandBus)),
           mut.assoc(_, "untag", untagHandler(commandBus)),
@@ -1126,7 +1149,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
           mut.assoc(_, "assert", assertHandler(buffer, events)),
           mut.assoc(_, "retract", retractHandler(buffer, events)),
           mut.assoc(_, "destroy", destroyHandler(buffer, events)),
-          mut.assoc(_, "query", queryHandler(buffer, events)),
+          mut.assoc(_, "query", queryHandler(repo, events)),
           mut.assoc(_, "select", selectHandler(buffer, events)),
           mut.assoc(_, "deselect", deselectHandler(model, events))),
         sh.drainEventsMiddleware(events, eventBus)));
@@ -1148,11 +1171,11 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
           mut.assoc(_, "skipped", skippedHandler(_.partial(compose, "find"))),
           mut.assoc(_, "lasted", lastedHandler(_.partial(compose, "find"))),
           mut.assoc(_, "loaded", loadedHandler(buffer)),
-          mut.assoc(_, "added", addedHandler(model, buffer, commandBus)),
+          mut.assoc(_, "added", addedHandler(model, repo, buffer, commandBus)),
           mut.assoc(_, "saved", savedHandler(commandBus)),
-          mut.assoc(_, "undone", undoneHandler(buffer)),
-          mut.assoc(_, "redone", redoneHandler(buffer)),
-          mut.assoc(_, "flushed", flushedHandler(buffer)),
+          mut.assoc(_, "undone", undoneHandler($state)),
+          mut.assoc(_, "redone", redoneHandler($state)),
+          mut.assoc(_, "flushed", flushedHandler($state)),
           mut.assoc(_, "toggled", toggledHandler(buffer)),
           mut.assoc(_, "asserted", assertedHandler(buffer)),
           mut.assoc(_, "retracted", retractedHandler(buffer)),
@@ -1162,7 +1185,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
           mut.assoc(_, "deselected", deselectedHandler(model))),
         sh.eventMiddleware(emitter)));
 
-    return new Outline(buffer, model, commandBus, eventBus, emitter, options);
+    return new Outline(repo, buffer, model, commandBus, eventBus, emitter, options);
   }
 
   (function(){
@@ -1190,30 +1213,12 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
 
   })();
 
-  function Cursor(cell){
-    this.cell = cell;
-  }
-
-  function deref(self){
-    return _.just(self.cell, _.deref, _.deref);
-  }
-
-  function swap(self, f){
-    _.swap(self.cell, _.fmap(_, f));
-  }
-
-  _.doto(Cursor,
-    _.implement(_.IDeref, {deref: deref}),
-    _.implement(_.ISwap, {swap: swap}));
-
-  var $ws = new Cursor($.cell(_.journal(w.entityWorkspace())));
 
   var ol = _.doto(
     outline(
-      w.buffer(
-        jsonResource("../data/outline.json", tidd.tiddology),
-        $ws),
-        {root: null}),
+      jsonResource("../data/outline.json", tidd.tiddology),
+      w.entityWorkspace(),
+      {root: null}),
     $.sub(_,
       t.filter(function(e){
         return e.type === "loaded";
