@@ -1,4 +1,4 @@
-import * as sh from "cosmos/shell";
+import * as sh from "atomic/shell";
 const c = sh.defs(sh.command, ["pipe", "find", "take", "skip", "last", "query", "load", "save", "cast", "toggle", "tag", "untag", "assert", "retract", "select", "deselect", "add", "destroy", "undo", "redo", "flush", "peek"]);
 //TODO wrap each with pre-conditions
 export const pipe = c.pipe;

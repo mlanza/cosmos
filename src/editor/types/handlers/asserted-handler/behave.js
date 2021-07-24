@@ -1,5 +1,5 @@
 import * as _ from "atomic/core";
-import * as $ from "atomic/reactives";
+import * as sh from "atomic/shell";
 import * as w from "cosmos/work";
 import * as ont from "cosmos/ontology";
 
@@ -19,4 +19,4 @@ function handle(self, event, next){
 }
 
 export default _.does(
-  _.implement($.IMiddleware, {handle}));
+  _.implement(sh.IMiddleware, {handle}));

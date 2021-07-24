@@ -126,12 +126,9 @@ define('jquery', ["vendor/jquery"], function(){
       return core.impart(tgt, core.partly);
     }));
   }
-})(["atomic/core", "atomic/dom", "atomic/immutables", "atomic/reactives", "atomic/repos", "atomic/transducers", "atomic/transients", "atomic/validates", "atomic/html", "atomic/svg"]);
+})(["atomic/core", "atomic/dom", "atomic/immutables", "atomic/reactives", "atomic/shell", "atomic/repos", "atomic/transducers", "atomic/transients", "atomic/validates", "atomic/html", "atomic/svg"]);
 define('cosmos/ontology', ["atomic/core", "vendor/cosmos/ontology"], function(_, ont){
   return _.impart(ont, _.partly);
-});
-define('cosmos/shell', ["atomic/core", "vendor/cosmos/shell"], function(_, sh){
-  return _.impart(sh, _.partly);
 });
 define('cosmos/work', ["atomic/core", "vendor/cosmos/work"], function(_, w){
   return _.impart(w, _.partly);
@@ -149,6 +146,7 @@ define('cmd/imports', function(){
   return {
     "_": "atomic/core",
     "$": "atomic/reactives",
+    "sh": "atomic/shell",
     "dom": "atomic/dom",
     "imm": "atomic/immutables",
     "t": "atomic/transducers",
@@ -158,7 +156,6 @@ define('cmd/imports', function(){
     "svg": "atomic/svg",
     "repos": "atomic/repos",
     "ont": "cosmos/ontology",
-    "sh": "cosmos/shell",
     "w": "cosmos/work",
     "tidd": "cosmos/tiddology"
   }

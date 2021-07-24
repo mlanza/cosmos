@@ -1,5 +1,5 @@
 import * as _ from "atomic/core";
-import * as $ from "atomic/reactives";
+import * as sh from "atomic/shell";
 import * as t from "atomic/transducers";
 
 function handle(self, message, next){
@@ -26,5 +26,5 @@ function handle(self, message, next){
 }
 
 export default _.does(
-  _.implement($.IMiddleware, {handle}));
+  _.implement(sh.IMiddleware, {handle}));
 

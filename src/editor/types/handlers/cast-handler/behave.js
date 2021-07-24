@@ -1,5 +1,5 @@
 import * as _ from "atomic/core";
-import * as $ from "atomic/reactives";
+import * as sh from "atomic/shell";
 import * as ont from "cosmos/ontology";
 import * as w from "cosmos/work";
 import * as tidd from "cosmos/tiddology";
@@ -23,10 +23,10 @@ function handle(self, command, next){
     _.swap(self.buffer, function(buffer){
       return w.edit(buffer, [entity]);
     });
-    $.raise(self.provider, e.casted([id, type]));
+    sh.raise(self.provider, e.casted([id, type]));
   }
   next(command);
 }
 
 export default _.does(
-  _.implement($.IMiddleware, {handle}));
+  _.implement(sh.IMiddleware, {handle}));

@@ -1,4 +1,4 @@
-import * as sh from "cosmos/shell";
+import * as sh from "atomic/shell";
 const e = sh.defs(sh.event, ["found", "took", "skipped", "lasted", "queried", "loaded", "saved", "casted", "toggled", "tagged", "untagged", "asserted", "retracted", "selected", "deselected", "added", "destroyed", "undone", "redone", "flushed", "peeked"]);
 //TODO wrap each with pre-conditions
 export const found = e.found;

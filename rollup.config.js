@@ -5,7 +5,6 @@ import json  from '@rollup/plugin-json';
 export default {
   input: [
     'src/ontology.js',
-    'src/shell.js',
     'src/work.js',
     'src/tiddology.js',
     'src/repos.js',
@@ -43,6 +42,7 @@ export default {
     "atomic/core",
     "atomic/immutables",
     "atomic/reactives",
+    "atomic/shell",
     "atomic/transducers",
     "atomic/transients",
     "atomic/repos",
@@ -51,7 +51,6 @@ export default {
     "atomic/svg",
     "atomic/dom",
     "cosmos/ontology",
-    "cosmos/shell",
     "cosmos/work",
     "cosmos/tiddology",
     "cosmis/editor"

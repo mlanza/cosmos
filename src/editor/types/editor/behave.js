@@ -1,8 +1,9 @@
 import * as _ from "atomic/core";
 import * as $ from "atomic/reactives";
+import * as sh from "atomic/shell";
 
 function dispatch(self, message){
-  $.dispatch(self.commandBus, message);
+  sh.dispatch(self.commandBus, message);
 }
 
 function lookup(self, id){ //TODO drop — for development purposes
@@ -15,5 +16,5 @@ function sub(self, observer){ //TODO provide separate set of external events (e.
 
 export default _.does(
   _.implement(_.ILookup, {lookup}),
-  _.implement($.IDispatch, {dispatch}),
+  _.implement(sh.IDispatch, {dispatch}),
   _.implement($.ISubscribe, {sub}));

@@ -1,9 +1,9 @@
 import * as _ from "atomic/core";
 import * as $ from "atomic/reactives";
+import * as sh from "atomic/shell";
 import * as t from "atomic/transducers";
 import * as mut from "atomic/transients";
 import * as imm from "atomic/immutables";
-import * as sh from "cosmos/shell";
 import * as w from "cosmos/work";
 import * as ms from "../../types/middlewares.js";
 import * as ed from "../../types/handlers.js";
@@ -31,9 +31,9 @@ export function editor(repo, options){
           expanded: _.into(imm.set(), options.expanded || []) //track which entities are expanded vs collapsed
         })),
         model = cursor($state),
-        events = $.events(),
-        commandBus = sh.bus(),
-        eventBus = sh.bus(),
+        events = sh.events(),
+        commandBus = sh.messageBus(),
+        eventBus = sh.messageBus(),
         emitter = $.subject(),
         peeked = $.cell(),
         selected = $.cursor(model, ["selected"]),
