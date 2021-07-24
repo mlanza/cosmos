@@ -6,41 +6,6 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
   //TODO Render a form that can be persisted thereby replacing `dynaform`.
   //TODO #FUTURE Optimize like effects (destruction, modification, addition) into aggregate effects before applying them.
 
-  var e = ed.events, c = ed.commands;
-
-  var IAssociative = _.IAssociative,
-      ISwap = _.ISwap,
-      IMergable = _.IMergable,
-      IHash = imm.IHash,
-      ISet = _.ISet,
-      INamable = _.INamable,
-      ITransientAssociative = mut.ITransientAssociative,
-      IDispatch = $.IDispatch,
-      ISubscribe = $.ISubscribe,
-      IRevertible = _.IRevertible,
-      IEmptyableCollection = _.IEmptyableCollection,
-      ICheckable = vd.ICheckable,
-      IConstrainable = vd.IConstrainable,
-      ICollection = _.ICollection,
-      ITransientCollection = mut.ITransientCollection,
-      IMiddleware = $.IMiddleware,
-      IReduce = _.IReduce,
-      IKVReduce = _.IKVReduce,
-      IAppendable = _.IAppendable,
-      IPrependable = _.IPrependable,
-      INext = _.INext,
-      ISeq = _.ISeq,
-      IDeref = _.IDeref,
-      IEquiv = _.IEquiv,
-      IIndexed = _.IIndexed,
-      ICounted = _.ICounted,
-      ISeqable = _.ISeqable,
-      IMap = _.IMap,
-      ILookup = _.ILookup,
-      IBounds = _.IBounds,
-      IFunctor = _.IFunctor,
-      IInclusive = _.IInclusive;
-
   var IOriginated = _.protocol({
     origin: null
   });
@@ -109,7 +74,6 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
 
   })();
 
-
   function Domain(repos){
     this.repos = repos;
   }
@@ -146,730 +110,15 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
 
     _.doto(Domain,
       _.implement(w.IResolver, {resolve: resolve}),
-      _.implement(ICollection, {conj: conj}),
-      _.implement(IEmptyableCollection, {empty: _.constantly(domain())}),
+      _.implement(_.ICollection, {conj: conj}),
+      _.implement(_.IEmptyableCollection, {empty: _.constantly(domain())}),
       _.implement(IOriginated, {origin: origin}),
       _.implement(ont.IMaker, {make: make}),
       _.implement(repos.IQueryable, {query: query}));
 
   })();
 
-  function handleExisting(event){
-    return function handle(self, command, next){
-      var e = Object.assign(event(), command, {type: event().type});
-      //var id = _.get(command, "id");
-      //if (_.apply(_.everyPred, _.contains(self.buffer, _), id)) {
-        $.raise(self.provider, e);
-      //}
-      next(command);
-    }
-  }
-
-
-  function PipeHandler(buffer, model, commandBus){
-    this.buffer = buffer;
-    this.model = model;
-    this.commandBus = commandBus;
-  }
-
-  var pipeHandler = _.constructs(PipeHandler);
-
-  (function(){
-
-    function handle(self, command, next){
-      var commands = _.get(command, "args");
-      _.just(commands,
-        _.map(_.assoc(_, "pipe-id",_.guid()), _),
-        _.each($.dispatch(self.commandBus, _), _));
-      next(command);
-    }
-
-    return _.doto(PipeHandler,
-      _.implement(IMiddleware, {handle: handle}));
-
-  })();
-
-  function LoadHandler(buffer, provider){
-    this.buffer = buffer;
-    this.provider = provider;
-  }
-
-  var loadHandler = _.constructs(LoadHandler);
-
-  (function(){
-
-    function handle(self, command, next){
-      $.raise(self.provider, e.loaded(_.get(command, "args")));
-      next(command);
-    }
-
-    return _.doto(LoadHandler,
-      _.implement(IMiddleware, {handle: handle}));
-
-  })();
-
-  function LoadedHandler(buffer){
-    this.buffer = buffer;
-  }
-
-  var loadedHandler = _.constructs(LoadedHandler);
-
-  (function(){
-
-    function handle(self, event, next){
-      _.swap(self.buffer, function(buffer){
-        return w.load(buffer, _.get(event, "args"));
-      });
-      next(event);
-    }
-
-    return _.doto(LoadedHandler,
-      _.implement(IMiddleware, {handle: handle}));
-
-  })();
-
-  function AddHandler(buffer, provider){
-    this.buffer = buffer;
-    this.provider = provider;
-  }
-
-  var addHandler = _.constructs(AddHandler);
-
-  (function(){
-
-    function handle(self, command, next){
-      var id = _.get(command, "id") || _.guid(),
-          args = _.get(command, "args");;
-      $.raise(self.provider, e.added(args, {id: id}));
-      next(command);
-    }
-
-    _.doto(AddHandler,
-      _.implement(IMiddleware, {handle: handle}));
-
-  })();
-
-  function AddedHandler(model, buffer, commandBus){
-    this.model = model;
-    this.buffer = buffer;
-    this.commandBus = commandBus;
-  }
-
-  var addedHandler = _.constructs(AddedHandler);
-
-  (function(){
-
-    function handle(self, event, next){
-      var id = _.get(event, "id"),
-          type = _.getIn(event, ["args", 0]),
-          title = _.getIn(event, ["args", 1]);
-
-      var added = ont.make(_.deref(self.buffer), {id: _.str(id), $type: type});
-      //TODO move default determination as attributes to the command where the event is computed
-      //TODO expose `make` further down?
-      var entity = _.reduce(function(memo, key){
-          var fld = ont.fld(memo, key);
-          return _.maybe(_.get(fld, "defaults"), function(defaults){
-            return ont.aset(fld, memo, defaults);
-          }) || memo;
-        }, tidd.title(added, title), _.keys(added));
-
-      _.swap(self.buffer, function(buffer){
-        return w.add(buffer, [entity]);
-      });
-
-      //TODO create middleware which clears selections after certain actions, remove `model`
-      _.just(self.model, _.deref, _.get(_, "selected"), _.toArray, c.deselect, $.dispatch(self.commandBus, _));
-      $.dispatch(self.commandBus, c.select([], {id: [id]}));
-      next(event);
-    }
-
-    _.doto(AddedHandler,
-      _.implement(IMiddleware, {handle: handle}));
-
-  })();
-
-  function ToggleHandler(buffer, provider){
-    this.buffer = buffer;
-    this.provider = provider;
-  }
-
-  var toggleHandler = _.constructs(ToggleHandler);
-
-  (function(){
-
-    _.doto(ToggleHandler,
-      _.implement(IMiddleware, {handle: handleExisting(e.toggled)}));
-
-  })();
-
-  function ToggledHandler(buffer){
-    this.buffer = buffer;
-  }
-
-  var toggledHandler = _.constructs(ToggledHandler);
-
-  (function(){
-
-    function handle(self, command, next){
-      var id = _.get(command, "id"),
-          key = _.getIn(command, ["args", 0]);
-      _.swap(self.buffer, function(buffer){
-        return w.edit(buffer, _.mapa(_.pipe(_.get(buffer, _), _.update(_, key, _.mapa(_.not, _))), id));
-      });
-      next(command);
-    }
-
-    _.doto(ToggledHandler,
-      _.implement(IMiddleware, {handle: handle}));
-
-  })();
-
-
-  function TagHandler(handler){
-    this.handler = handler;
-  }
-
-  var tagHandler = _.constructs(TagHandler);
-
-  (function(){
-
-    function handle(self, command, next){
-      var altered = _.just(command, sh.alter(_, "assert"), _.update(_, "args", _.pipe(_.cons("tag", _), _.toArray)));
-      $.handle(self.handler, altered, next);
-      next(command);
-    }
-
-    _.doto(TagHandler,
-      _.implement(IMiddleware, {handle: handle}));
-
-  })();
-
-  function UntagHandler(handler){
-    this.handler = handler;
-  }
-
-  var untagHandler = _.constructs(UntagHandler);
-
-  (function(){
-
-    function handle(self, command, next){
-      var altered =  _.just(command, sh.alter(_, "retract"), _.update(_, "args", _.pipe(_.cons("tag", _), _.toArray)));
-      $.handle(self.handler, altered, next);
-      next(command);
-    }
-
-    _.doto(UntagHandler,
-      _.implement(IMiddleware, {handle: handle}));
-
-  })();
-
-  function CastHandler(buffer, provider){
-    this.buffer = buffer;
-    this.provider = provider;
-  }
-
-  var castHandler = _.constructs(CastHandler);
-
-  (function(){
-
-    //it's unavoidable that attributes may not line up on a cast, so cast wisely.
-    function handle(self, command, next){
-      var prior = _.get(self.buffer, _.get(command, "id")),
-          id = _.get(command, "id"),
-          type = _.getIn(command, ["args", 0]);
-      if (prior) {
-        var entity = ont.make(self.buffer, Object.assign({}, prior.attrs, {$type: type})),
-            title  = tidd.title(prior),
-            text   = tidd.text(prior);
-        if (title){
-          entity = tidd.title(entity, title);
-        }
-        if (text){
-          entity = tidd.text(entity, text);
-        }
-        _.swap(self.buffer, function(buffer){
-          return w.edit(buffer, [entity]);
-        });
-        $.raise(self.provider, e.casted([id, type]));
-      }
-      next(command);
-    }
-
-    _.doto(CastHandler,
-      _.implement(IMiddleware, {handle: handle}));
-
-  })();
-
-  function SaveHandler(buffer, provider){
-    this.buffer = buffer;
-    this.provider = provider;
-  }
-
-  var saveHandler = _.constructs(SaveHandler);
-
-  (function (){
-
-    function handle(self, command){
-      w.save(self.buffer)
-      $.raise(self.provider, e.saved());
-    }
-
-    _.doto(SaveHandler,
-      _.implement(IMiddleware, {handle: handle}));
-
-  })();
-
-  function SavedHandler(commandBus){
-    this.commandBus = commandBus;
-  }
-
-  var savedHandler = _.constructs(SavedHandler);
-
-  (function(){
-
-    function handle(self, event, next){
-      $.dispatch(self.commandBus, c.flush());
-      next(event);
-    }
-
-    return _.doto(SavedHandler,
-      _.implement(IMiddleware, {handle: handle}));
-
-  })();
-
-  function journalsCommand(able, event){
-
-    function handle(self, command, next){
-      if (able(_.deref(self.state))){
-        $.raise(self.provider, event);
-      }
-      next(command);
-    }
-
-    return _.does(
-      _.implement(IMiddleware, {handle: handle}));
-
-  }
-
-  function journalsEvent(effect){
-
-    function handle(self, event, next){
-      _.swap(self.state, effect);
-      next(event);
-    }
-
-    return _.does(
-      _.implement(IMiddleware, {handle: handle}));
-
-  }
-
-  function UndoHandler(state, provider){
-    this.state = state;
-    this.provider = provider;
-  }
-
-  var undoHandler = _.constructs(UndoHandler);
-
-  _.doto(UndoHandler,
-    journalsCommand(IRevertible.undoable, e.undone()));
-
-  function UndoneHandler(state){
-    this.state = state;
-  }
-
-  var undoneHandler = _.constructs(UndoneHandler);
-
-  _.doto(UndoneHandler,
-    journalsEvent(IRevertible.undo));
-
-  function RedoHandler(state, provider){
-    this.state = state;
-    this.provider = provider;
-  }
-
-  var redoHandler = _.constructs(RedoHandler);
-
-  _.doto(RedoHandler,
-    journalsCommand(IRevertible.redoable, e.redone()));
-
-  function RedoneHandler(state, provider){
-    this.state = state;
-    this.provider = provider;
-  }
-
-  var redoneHandler = _.constructs(RedoneHandler);
-
-  _.doto(RedoneHandler,
-    journalsEvent(IRevertible.redo));
-
-  function FlushHandler(state, provider){
-    this.state = state;
-    this.provider = provider;
-  }
-
-  var flushHandler = _.constructs(FlushHandler);
-
-  _.doto(FlushHandler,
-    journalsCommand(_.constantly(true), e.flushed()));
-
-  function FlushedHandler(state, provider){
-    this.state = state;
-    this.provider = provider;
-  }
-
-  var flushedHandler = _.constructs(FlushedHandler);
-
-  _.doto(FlushedHandler,
-    journalsEvent(IRevertible.flush));
-
-  function AssertHandler(buffer, provider){
-    this.buffer = buffer;
-    this.provider = provider;
-  }
-
-  var assertHandler = _.constructs(AssertHandler);
-
-  (function(){
-
-    _.doto(AssertHandler,
-      _.implement(IMiddleware, {handle: handleExisting(e.asserted)}));
-
-  })();
-
-  function AssertedHandler(buffer){
-    this.buffer = buffer;
-  }
-
-  var assertedHandler = _.constructs(AssertedHandler);
-
-  (function(){
-
-    function handle(self, event, next){
-      var key = _.getIn(event, ["args", 0]),
-          value = _.getIn(event, ["args", 1]),
-          id = _.get(event, "id");
-
-      _.swap(self.buffer, function(buffer){
-        return w.edit(buffer, _.mapa(function(id){
-          return ont.assert(_.get(buffer, id), key, value);
-        }, id));
-      });
-
-      next(event);
-    }
-
-    _.doto(AssertedHandler,
-      _.implement(IMiddleware, {handle: handle}));
-
-  })();
-
-  function BlockingHandler(key, buffer, handler){
-    this.key = key;
-    this.buffer = buffer;
-    this.handler = handler;
-  }
-
-  var blockingHandler = _.constructs(BlockingHandler);
-
-  (function(){
-
-    function handle(self, command, next){
-      var id = _.get(command, "id"),
-          entity = _.get(self.buffer, id);
-      if (entity) {
-        var key = _.get(command, "key");
-        if (_.get(ont.fld(entity, key), self.key)) {
-          throw new Error("Field `" + key + "` is " + self.key + " and thus cannot " + _.identifier(command) + ".");
-        }
-        IMiddleware.handle(self.handler, command, next);
-      }
-      next(command);
-    }
-
-    _.doto(BlockingHandler,
-      _.implement(IMiddleware, {handle: handle}));
-
-  })();
-
-  function DestroyHandler(buffer, provider){
-    this.buffer = buffer;
-    this.provider = provider;
-  }
-
-  var destroyHandler = _.constructs(DestroyHandler);
-
-  (function(){
-
-    _.doto(DestroyHandler,
-      _.implement(IMiddleware, {handle: handleExisting(e.destroyed)}));
-
-  })();
-
-  function DestroyedHandler(buffer){
-    this.buffer = buffer;
-  }
-
-  var destroyedHandler = _.constructs(DestroyedHandler);
-
-  (function(){
-
-    function handle(self, event, next){
-      var id = _.get(event, "id");
-      _.swap(self.buffer, function(buffer){
-        return w.destroy(buffer, _.mapa(_.get(buffer, _), id));
-      });
-
-      next(event);
-    }
-
-    _.doto(DestroyHandler,
-      _.implement(IMiddleware, {handle: handle}));
-
-  })();
-
-  function RetractHandler(buffer, provider){
-    this.buffer = buffer;
-    this.provider = provider;
-  }
-
-  var retractHandler = _.constructs(RetractHandler);
-
-  (function(){
-
-    _.doto(RetractHandler,
-      _.implement(IMiddleware, {handle: handleExisting(e.retracted)}));
-
-  })();
-
-  function RetractedHandler(buffer){
-    this.buffer = buffer;
-  }
-
-  var retractedHandler = _.constructs(RetractedHandler);
-
-  (function(){
-
-    function handle(self, event, next){
-      var key = _.getIn(event, ["args", 0]),
-          value = _.getIn(event, ["args", 1]),
-          id = _.get(event, "id");
-
-      _.swap(self.buffer, function(buffer){
-        return w.edit(buffer, _.mapa(function(id){
-          var entity = _.get(buffer, id);
-          return _.isSome(value) ? ont.retract(entity, key, value) : ont.retract(entity, key);
-        }, id));
-      });
-
-      next(event);
-    }
-
-    _.doto(RetractedHandler,
-      _.implement(IMiddleware, {handle: handle}));
-
-  })();
-
-  function QueryHandler(buffer, provider){
-    this.buffer = buffer;
-    this.provider = provider;
-  }
-
-  var queryHandler = _.constructs(QueryHandler);
-
-  (function(){
-
-    function handle(self, command, next){
-      return _.fmap(repos.query(_.deref(self.buffer), _.get(command, "plan")), function(entities){
-        $.raise(self.provider, e.queried(entities));
-        next(command);
-      });
-    }
-
-    return _.doto(QueryHandler,
-      _.implement(IMiddleware, {handle: handle}));
-
-  })();
-
-  function QueriedHandler(commandBus){
-    this.commandBus = commandBus;
-  }
-
-  var queriedHandler = _.constructs(QueriedHandler);
-
-  (function(){
-
-    function handle(self, event, next){
-      $.dispatch(self.commandBus, c.load(_.get(event, "args")));
-      next(event);
-    }
-
-    return _.doto(QueriedHandler,
-      _.implement(IMiddleware, {handle: handle}));
-
-  })();
-
-  function DeselectHandler(model, provider){
-    this.model = model;
-    this.provider = provider;
-  }
-
-  var deselectHandler = _.constructs(DeselectHandler);
-
-  (function(){
-
-    function handle(self, command, next){
-      $.raise(self.provider, sh.effect(command, "deselected"));
-      next(command);
-    }
-
-    return _.doto(DeselectHandler,
-      _.implement(IMiddleware, {handle: handle}));
-
-  })();
-
-  function DeselectedHandler(model){
-    this.model = model;
-  }
-
-  var deselectedHandler = _.constructs(DeselectedHandler);
-
-  (function(){
-
-    function handle(self, event, next){
-      var id = _.get(event, "id");
-      _.swap(self.model,
-        _.update(_, "selected",
-          _.apply(_.disj, _, id))); //_.comp(_.toArray, _.remove(_.includes(id, _), _))
-      next(event);
-    }
-
-    return _.doto(DeselectedHandler,
-      _.implement(IMiddleware, {handle: handle}));
-
-  })();
-
-  function PeekHandler(provider){
-    this.provider = provider;
-  }
-
-  var peekHandler = _.constructs(PeekHandler);
-
-  (function(){
-
-    function handle(self, command, next){
-      $.raise(self.provider, sh.effect(command, "peeked"));
-      next(command);
-    }
-
-    return _.doto(PeekHandler,
-      _.implement(IMiddleware, {handle: handle}));
-
-  })();
-
-  function PeekedHandler(buffer, model){
-    this.buffer = buffer;
-    this.model = model;
-  }
-
-  var peekedHandler = _.constructs(PeekedHandler);
-
-  (function(){
-    function handle(self, event, next){
-      _.just(_.deref(self.model).selected, _.toArray, _.mapa(_.get(_.deref(self.buffer), _), _), _.see("peeked"));
-      next(event);
-    }
-
-    return _.doto(PeekedHandler,
-      _.implement(IMiddleware, {handle: handle}));
-
-  })();
-
-  function SelectionMiddleware(model, pred){
-    this.model = model;
-    this.pred = pred;
-  }
-
-  var selectionMiddleware = _.constructs(SelectionMiddleware);
-
-  (function(){
-
-    function handle(self, message, next){
-      if (!_.contains(message, "id") && self.pred(message)) {
-        _.just(
-          self.model,
-          _.deref,
-          _.get(_, "selected"), //a sequence!
-          _.toArray,
-          _.assoc(message, "id", _),
-          next);
-      } else {
-        next(message);
-      }
-    }
-
-    return _.doto(SelectionMiddleware,
-      _.implement(IMiddleware, {handle: handle}));
-
-  })();
-
-  function FindMiddleware(effects, compile, buffer, pred, lastPipeId){
-    this.effects = effects;
-    this.compile = compile;
-    this.buffer = buffer;
-    this.pred = pred;
-    this.lastPipeId = lastPipeId;
-  }
-
-  var findMiddleware = _.constructs(FindMiddleware);
-
-  (function(){
-    function handle(self, message, next){
-      var pipeId = _.get(message, "pipe-id");
-
-      if (_.notEq(pipeId, self.lastPipeId)) {
-        _.reset(self.effects, []);
-        _.log("cleared find cache!");
-        self.lastPipeId = pipeId;
-      }
-
-      if (!_.contains(message, "id") && self.pred(message)) {
-        var effects = _.deref(self.effects);
-        if (_.seq(effects)) {
-          var buffer = _.deref(self.buffer);
-          var f = _.apply(_.comp, _.mapa(self.compile, effects));
-          var id = _.into([], _.comp(f, t.map(_.get(_, "id")), t.map(_.first)), buffer);
-          var select = _.assoc(message, "id", id);
-          next(select);
-          return;
-        }
-      }
-      next(message);
-    }
-
-    return _.doto(FindMiddleware,
-      _.implement(IMiddleware, {handle: handle}));
-
-  })();
-
-  function KeyedMiddleware(key, value){
-    this.key = key;
-    this.value = value;
-  }
-
-  var keyedMiddleware = _.constructs(KeyedMiddleware);
-
-  (function(){
-    function handle(self, message, next){
-      _.just(message,
-        _.assoc(_, self.key, self.value()),
-        next);
-    }
-
-    return _.doto(KeyedMiddleware,
-      _.implement(IMiddleware, {handle: handle}));
-
-  })();
+  var c = ed.commands;
 
   function Cursor(source){
     this.source = source;
@@ -947,58 +196,58 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     _.doto(commandBus,
       mut.conj(_,
         sh.lockingMiddleware(commandBus),
-        keyedMiddleware("command-id", _.generate(_.iterate(_.inc, 1))),
-        findMiddleware(effects, compile, buffer, entityDriven),
-        selectionMiddleware(model, entityDriven),
+        ed.keyedMiddleware("command-id", _.generate(_.iterate(_.inc, 1))),
+        ed.findMiddleware(effects, compile, buffer, entityDriven),
+        ed.selectionMiddleware(model, entityDriven),
         sh.teeMiddleware(_.see("command")),
         _.doto(sh.handlerMiddleware(),
-          mut.assoc(_, "pipe", pipeHandler(buffer, model, commandBus)),
+          mut.assoc(_, "pipe", ed.pipeHandler(buffer, model, commandBus)),
           mut.assoc(_, "find", ed.effectHandler(events, "found")),
           mut.assoc(_, "take", ed.effectHandler(events, "took")),
           mut.assoc(_, "skip", ed.effectHandler(events, "skipped")),
           mut.assoc(_, "last", ed.effectHandler(events, "lasted")),
-          mut.assoc(_, "peek", peekHandler(events)),
-          mut.assoc(_, "load", loadHandler(buffer, events)),
-          mut.assoc(_, "add", addHandler(buffer, events)),
-          mut.assoc(_, "save", saveHandler(buffer, events)),
-          mut.assoc(_, "undo", undoHandler($state, events)),
-          mut.assoc(_, "redo", redoHandler($state, events)),
-          mut.assoc(_, "flush", flushHandler($state, events)),
-          mut.assoc(_, "cast", castHandler(buffer, events)),
-          mut.assoc(_, "tag", tagHandler(commandBus)),
-          mut.assoc(_, "untag", untagHandler(commandBus)),
-          mut.assoc(_, "toggle", toggleHandler(buffer, events)),
-          mut.assoc(_, "assert", assertHandler(buffer, events)),
-          mut.assoc(_, "retract", retractHandler(buffer, events)),
-          mut.assoc(_, "destroy", destroyHandler(buffer, events)),
-          mut.assoc(_, "query", queryHandler(buffer, events)),
+          mut.assoc(_, "peek", ed.peekHandler(events)),
+          mut.assoc(_, "load", ed.loadHandler(buffer, events)),
+          mut.assoc(_, "add", ed.addHandler(buffer, events)),
+          mut.assoc(_, "save", ed.saveHandler(buffer, events)),
+          mut.assoc(_, "undo", ed.undoHandler($state, events)),
+          mut.assoc(_, "redo", ed.redoHandler($state, events)),
+          mut.assoc(_, "flush", ed.flushHandler($state, events)),
+          mut.assoc(_, "cast", ed.castHandler(buffer, events)),
+          mut.assoc(_, "tag", ed.tagHandler(commandBus)),
+          mut.assoc(_, "untag", ed.untagHandler(commandBus)),
+          mut.assoc(_, "toggle", ed.toggleHandler(buffer, events)),
+          mut.assoc(_, "assert", ed.assertHandler(buffer, events)),
+          mut.assoc(_, "retract", ed.retractHandler(buffer, events)),
+          mut.assoc(_, "destroy", ed.destroyHandler(buffer, events)),
+          mut.assoc(_, "query", ed.queryHandler(buffer, events)),
           mut.assoc(_, "select", ed.selectHandler(buffer, events)),
-          mut.assoc(_, "deselect", deselectHandler(model, events))),
+          mut.assoc(_, "deselect", ed.deselectHandler(model, events))),
         sh.drainEventsMiddleware(events, eventBus)));
 
     _.doto(eventBus,
       mut.conj(_,
-        keyedMiddleware("event-id", _.generate(_.iterate(_.inc, 1))),
+        ed.keyedMiddleware("event-id", _.generate(_.iterate(_.inc, 1))),
         sh.teeMiddleware(_.see("event")),
         _.doto(sh.handlerMiddleware(),
-          mut.assoc(_, "peeked", peekedHandler(buffer, model)),
+          mut.assoc(_, "peeked", ed.peekedHandler(buffer, model)),
           mut.assoc(_, "found", ed.effectedHandler(effects)),
           mut.assoc(_, "took", ed.effectedHandler(effects)),
           mut.assoc(_, "skipped", ed.effectedHandler(effects)),
           mut.assoc(_, "lasted", ed.effectedHandler(effects)),
-          mut.assoc(_, "loaded", loadedHandler(buffer)),
-          mut.assoc(_, "added", addedHandler(model, buffer, commandBus)),
-          mut.assoc(_, "saved", savedHandler(commandBus)),
-          mut.assoc(_, "undone", undoneHandler($state)),
-          mut.assoc(_, "redone", redoneHandler($state)),
-          mut.assoc(_, "flushed", flushedHandler($state)),
-          mut.assoc(_, "toggled", toggledHandler(buffer)),
-          mut.assoc(_, "asserted", assertedHandler(buffer)),
-          mut.assoc(_, "retracted", retractedHandler(buffer)),
-          mut.assoc(_, "destroyed", destroyedHandler(buffer)),
-          mut.assoc(_, "queried", queriedHandler(commandBus)),
+          mut.assoc(_, "loaded", ed.loadedHandler(buffer)),
+          mut.assoc(_, "added", ed.addedHandler(model, buffer, commandBus)),
+          mut.assoc(_, "saved", ed.savedHandler(commandBus)),
+          mut.assoc(_, "undone", ed.undoneHandler($state)),
+          mut.assoc(_, "redone", ed.redoneHandler($state)),
+          mut.assoc(_, "flushed", ed.flushedHandler($state)),
+          mut.assoc(_, "toggled", ed.toggledHandler(buffer)),
+          mut.assoc(_, "asserted", ed.assertedHandler(buffer)),
+          mut.assoc(_, "retracted", ed.retractedHandler(buffer)),
+          mut.assoc(_, "destroyed", ed.destroyedHandler(buffer)),
+          mut.assoc(_, "queried", ed.queriedHandler(commandBus)),
           mut.assoc(_, "selected", ed.selectedHandler(model)),
-          mut.assoc(_, "deselected", deselectedHandler(model))),
+          mut.assoc(_, "deselected", ed.deselectedHandler(model))),
         sh.eventMiddleware(emitter)));
 
     return new Outline(repo, buffer, model, commandBus, eventBus, emitter, options);
@@ -1022,9 +271,9 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     }
 
     return _.doto(Outline,
-      _.implement(ILookup, {lookup: lookup}),
-      _.implement(IDispatch, {dispatch: dispatch}),
-      _.implement(ISubscribe, {sub: sub}),
+      _.implement(_.ILookup, {lookup: lookup}),
+      _.implement($.IDispatch, {dispatch: dispatch}),
+      _.implement($.ISubscribe, {sub: sub}),
       _.implement(IView, {render: render}));
 
   })();
@@ -1071,7 +320,6 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     _.merge(_, {
       ol: ol,
       c: c,
-      e: e,
       dirtyKeys: dirtyKeys,
       domain: domain
     }), _.impart(_, _.partly));

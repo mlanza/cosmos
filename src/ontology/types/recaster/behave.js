@@ -3,7 +3,7 @@ import {ICaster} from "../../protocols/icaster/instance.js";
 import * as p from "../../protocols/concrete.js";
 
 function cast(self, values){
-  return _.fmap(ont.cast(self.caster, values), self.cast);
+  return _.fmap(p.cast(self.caster, values), self.cast);
 }
 
 function uncast(self, coll){

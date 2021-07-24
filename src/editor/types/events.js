@@ -13,6 +13,7 @@ export const toggled = e.toggled;
 export const tagged = e.tagged;
 export const untagged = e.untagged;
 export const asserted = e.asserted;
+export const retracted = e.retracted;
 export const selected = e.selected;
 export const deselected = e.deselected;
 export const added = e.added;
