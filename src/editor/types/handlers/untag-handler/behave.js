@@ -3,7 +3,7 @@ import * as $ from "atomic/reactives";
 import * as sh from "cosmos/shell";
 
 function handle(self, command, next){
-  var altered =  _.just(command, sh.alter(_, "retract"), _.update(_, "args", _.pipe(_.cons("tag", _), _.toArray)));
+  const altered =  _.just(command, sh.alter(_, "retract"), _.update(_, "args", _.pipe(_.cons("tag", _), _.toArray)));
   $.handle(self.handler, altered, next);
   next(command);
 }

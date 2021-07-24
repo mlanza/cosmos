@@ -9,7 +9,7 @@ export function Event(type, attrs){
 export const event = constructs(Event);
 
 export function effect(message, type){
-  var e = new Event();
+  const e = new Event();
   return Object.assign(e, message, {type: type});
 }
 

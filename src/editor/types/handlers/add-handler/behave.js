@@ -3,8 +3,8 @@ import * as $ from "atomic/reactives";
 import * as e from "../../events.js";
 
 function handle(self, command, next){
-  var id = _.get(command, "id") || _.guid(), //TODO guid is dep
-      args = _.get(command, "args");;
+  const id = _.get(command, "id") || _.guid(), //TODO guid is dep
+        args = _.get(command, "args");;
   $.raise(self.provider, e.added(args, {id: id}));
   next(command);
 }

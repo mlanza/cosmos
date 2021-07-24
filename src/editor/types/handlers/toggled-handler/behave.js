@@ -3,8 +3,8 @@ import * as $ from "atomic/reactives";
 import * as w from "cosmos/work";
 
 function handle(self, command, next){
-  var id = _.get(command, "id"),
-      key = _.getIn(command, ["args", 0]);
+  const id = _.get(command, "id"),
+        key = _.getIn(command, ["args", 0]);
   _.swap(self.buffer, function(buffer){
     return w.edit(buffer, _.mapa(_.pipe(_.get(buffer, _), _.update(_, key, _.mapa(_.not, _))), id));
   });

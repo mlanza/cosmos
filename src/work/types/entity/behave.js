@@ -9,9 +9,9 @@ import {ISerializable} from "../../protocols/iserializable/instance.js";
 import * as p from "../../protocols/concrete.js";
 
 function assertions(self){
-  var id = p.id(self);
+  const id = p.id(self);
   return _.mapcat(function(key){
-    var fld = ont.fld(self, key);
+    const fld = ont.fld(self, key);
     return _.get(fld, "computed") ? [] : _.map(function(value){
       return assertion(id, key, value);
     }, _.get(self, key));

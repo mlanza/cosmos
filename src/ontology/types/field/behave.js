@@ -16,15 +16,15 @@ function contains(self, key){
 }
 
 function aget(self, entity){
-  var key = _.get(self, "key");
+  const key = _.get(self, "key");
   return _.just(entity.attrs, _.get(_, key), function(value){
     return p.cast(self.caster, value);
   });
 }
 
 function aset(self, entity, values){
-  var key =  _.get(self, "key"),
-      value = p.uncast(self.caster, values);
+  const key =  _.get(self, "key"),
+        value = p.uncast(self.caster, values);
   return new entity.constructor(entity.topic, _.isSome(value) ? _.assoc(entity.attrs, key, value) : _.dissoc(entity.attrs, self.key));
 }
 

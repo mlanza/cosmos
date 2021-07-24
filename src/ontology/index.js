@@ -7,9 +7,9 @@ export * from "./protocols/concrete.js";
 export * from "./types.js";
 
 export function reassign(self, key, f){
-  var field = p.fld(self, key),
-      values = p.aget(field, self),
-      revised = f(values);
+  const field = p.fld(self, key),
+        values = p.aget(field, self),
+        revised = f(values);
   return revised === values ? self : p.aset(field, self, _.into(_.empty(values), revised));
 }
 
