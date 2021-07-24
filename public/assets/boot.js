@@ -139,6 +139,9 @@ define('cosmos/work', ["atomic/core", "vendor/cosmos/work"], function(_, w){
 define('cosmos/tiddology', ["atomic/core", "vendor/cosmos/tiddology"], function(_, w){
   return _.impart(w, _.partly);
 });
+define('cosmos/editor', ["atomic/core", "vendor/cosmos/editor"], function(_, ed){
+  return _.impart(ed, _.partly);
+});
 define('cmd/imports', function(){
   return {
     "_": "atomic/core",

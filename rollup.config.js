@@ -7,7 +7,8 @@ export default {
     'src/ontology.js',
     'src/shell.js',
     'src/work.js',
-    'src/tiddology.js'
+    'src/tiddology.js',
+    'src/editor.js'
   ],
   output: {
     dir: 'public/assets/vendor/cosmos',
@@ -51,7 +52,8 @@ export default {
     "cosmos/ontology",
     "cosmos/shell",
     "cosmos/work",
-    "cosmos/tiddology"
+    "cosmos/tiddology",
+    "cosmis/editor"
   ],
   plugins: [
     resolve(),

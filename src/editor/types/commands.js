@@ -1,0 +1,24 @@
+import * as sh from "cosmos/shell";
+const c = sh.defs(sh.command, ["pipe", "find", "take", "skip", "last", "query", "load", "save", "cast", "toggle", "tag", "untag", "assert", "retract", "select", "deselect", "add", "destroy", "undo", "redo", "flush", "peek"]);
+//TODO wrap each with pre-conditions
+export const pipe = c.pipe;
+export const find = c.find;
+export const take = c.take;
+export const skip = c.skip;
+export const last = c.last;
+export const query = c.query;
+export const load = c.load;
+export const save = c.save;
+export const cast = c.cast;
+export const toggle = c.toggle;
+export const tag = c.tag;
+export const assert = c.assert;
+export const retract = c.retract;
+export const select = c.select;
+export const deselect = c.deselect;
+export const add = c.add;
+export const destroy = c.destroy;
+export const undo = c.undo;
+export const redo = c.redo;
+export const flush = c.flush;
+export const peek = c.peek;
