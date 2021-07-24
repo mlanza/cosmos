@@ -1,5 +1,5 @@
 import * as _ from "atomic/core";
-import * as $ from "atomic/reactives";
+import * as sh from "atomic/shell";
 import * as c from "../../commands.js";
 import * as ont from "cosmos/ontology";
 import * as w from "cosmos/work";
@@ -25,11 +25,11 @@ function handle(self, event, next){
   });
 
   //TODO create middleware which clears selections after certain actions, remove `model`
-  _.just(self.model, _.deref, _.get(_, "selected"), _.toArray, c.deselect, $.dispatch(self.commandBus, _));
-  $.dispatch(self.commandBus, c.select([], {id: [id]}));
+  _.just(self.model, _.deref, _.get(_, "selected"), _.toArray, c.deselect, sh.dispatch(self.commandBus, _));
+  sh.dispatch(self.commandBus, c.select([], {id: [id]}));
   next(event);
 }
 
 export default _.does(
-  _.implement($.IMiddleware, {handle}));
+  _.implement(sh.IMiddleware, {handle}));
 

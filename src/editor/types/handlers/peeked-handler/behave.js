@@ -1,5 +1,5 @@
 import * as _ from "atomic/core";
-import * as $ from "atomic/reactives";
+import * as sh from "atomic/shell";
 
 function handle(self, event, next){
   _.just(self.selected, _.deref, _.mapa(_.get(_.deref(self.buffer), _), _), self.effect);
@@ -7,4 +7,4 @@ function handle(self, event, next){
 }
 
 export default _.does(
-  _.implement($.IMiddleware, {handle}));
+  _.implement(sh.IMiddleware, {handle}));

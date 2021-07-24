@@ -1,5 +1,5 @@
 import * as _ from "atomic/core";
-import * as $ from "atomic/reactives";
+import * as sh from "atomic/shell";
 
 function handle(self, event, next){
   const id = _.get(event, "id");
@@ -10,4 +10,4 @@ function handle(self, event, next){
 }
 
 export default _.does(
-  _.implement($.IMiddleware, {handle}));
+  _.implement(sh.IMiddleware, {handle}));

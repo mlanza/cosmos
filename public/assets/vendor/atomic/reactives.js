@@ -1,11 +1,5 @@
 define(['exports', 'atomic/core', 'atomic/transducers', 'symbol', 'promise', 'atomic/transients'], function (exports, _, t, _Symbol, Promise$1, mut) { 'use strict';
 
-  var IDispatch = _.protocol({
-    dispatch: null
-  });
-
-  var dispatch$3 = IDispatch.dispatch;
-
   function on2(self, f) {
     f(self);
   }
@@ -16,15 +10,15 @@ define(['exports', 'atomic/core', 'atomic/transducers', 'symbol', 'promise', 'at
     }
   }
 
-  var on$2 = _.overload(null, null, on2, on3);
+  var on$1 = _.overload(null, null, on2, on3);
 
   var IEvented = _.protocol({
-    on: on$2,
+    on: on$1,
     off: null,
     trigger: null
   });
 
-  var on$1 = IEvented.on;
+  var on = IEvented.on;
   var off = IEvented.off;
   var trigger = IEvented.trigger;
 
@@ -37,7 +31,7 @@ define(['exports', 'atomic/core', 'atomic/transducers', 'symbol', 'promise', 'at
     var ctx = {
       cb: cb
     };
-    return on$1(self, key, cb);
+    return on(self, key, cb);
   }
 
   function one4(self, key, selector, callback) {
@@ -49,28 +43,10 @@ define(['exports', 'atomic/core', 'atomic/transducers', 'symbol', 'promise', 'at
     var ctx = {
       cb: cb
     };
-    return on$1(self, key, selector, cb);
+    return on(self, key, selector, cb);
   }
 
   var one = _.overload(null, null, null, one3, one4);
-
-  var IEventProvider = _.protocol({
-    raise: null,
-    release: null
-  });
-
-  var raise$1 = IEventProvider.raise;
-  var release$1 = IEventProvider.release;
-
-  var IMiddleware = _.protocol({
-    handle: null
-  });
-
-  function handle2(self, message) {
-    return IMiddleware.handle(self, message, _.noop);
-  }
-
-  var handle$4 = _.overload(null, null, handle2, IMiddleware.handle);
 
   var IPublish = _.protocol({
     pub: null,
@@ -167,14 +143,10 @@ define(['exports', 'atomic/core', 'atomic/transducers', 'symbol', 'promise', 'at
 
   var p = /*#__PURE__*/Object.freeze({
     __proto__: null,
-    dispatch: dispatch$3,
-    on: on$1,
+    on: on,
     off: off,
     trigger: trigger,
     one: one,
-    raise: raise$1,
-    release: release$1,
-    handle: handle$4,
     pub: pub$4,
     err: err$3,
     complete: complete$3,
@@ -296,12 +268,12 @@ define(['exports', 'atomic/core', 'atomic/transducers', 'symbol', 'promise', 'at
     pub$3(self, f(self.state));
   }
 
-  function dispose$2(self) {
+  function dispose$1(self) {
     _.satisfies(_.IDisposable, self.observer) && _.dispose(self.observer);
   }
 
-  var behave$e = _.does(ireduce, imergable, _.implement(_.IDisposable, {
-    dispose: dispose$2
+  var behave$7 = _.does(ireduce, imergable, _.implement(_.IDisposable, {
+    dispose: dispose$1
   }), _.implement(_.IDeref, {
     deref: deref$3
   }), _.implement(_.IReset, {
@@ -319,7 +291,7 @@ define(['exports', 'atomic/core', 'atomic/transducers', 'symbol', 'promise', 'at
     closed: closed$2
   }));
 
-  behave$e(Cell);
+  behave$7(Cell);
 
   function deref$2(self) {
     if (subscribed$6(self) === 0) {
@@ -400,7 +372,7 @@ define(['exports', 'atomic/core', 'atomic/transducers', 'symbol', 'promise', 'at
     return subscribed$6(self.sink);
   }
 
-  function dispose$1(self) {
+  function dispose(self) {
     var _$transition3, _ref3;
 
     _.swap(self.state, (_ref3 = _, _$transition3 = _ref3.transition, function transition(_argPlaceholder3) {
@@ -412,8 +384,8 @@ define(['exports', 'atomic/core', 'atomic/transducers', 'symbol', 'promise', 'at
     return _.state(_.deref(self.state));
   }
 
-  var behave$d = _.does(ireduce, imergable, _.implement(_.IDisposable, {
-    dispose: dispose$1
+  var behave$6 = _.does(ireduce, imergable, _.implement(_.IDisposable, {
+    dispose: dispose
   }), _.implement(_.IStateMachine, {
     state: state
   }), _.implement(ISubscribe, {
@@ -422,32 +394,7 @@ define(['exports', 'atomic/core', 'atomic/transducers', 'symbol', 'promise', 'at
     subscribed: subscribed$4
   }));
 
-  behave$d(AudienceDetector);
-
-  function Bus(state, handler) {
-    this.state = state;
-    this.handler = handler;
-  }
-  function bus(state, handler) {
-    return new Bus(state, handler);
-  }
-
-  function dispatch$2(self, command) {
-    handle$4(self.handler, command);
-  }
-
-  function dispose(self) {
-    _.satisfies(_.IDisposable, self.state) && _.dispose(self.state);
-    _.satisfies(_.IDisposable, self.handler) && _.dispose(self.handler);
-  }
-
-  var behave$c = _.does(_.forward("state", ISubscribe, _.IDeref, _.IReset, _.ISwap, _.IReduce), _.implement(IDispatch, {
-    dispatch: dispatch$2
-  }), _.implement(_.IDisposable, {
-    dispose: dispose
-  }));
-
-  behave$c(Bus);
+  behave$6(AudienceDetector);
 
   function Cursor(source, path, callbacks) {
     this.source = source;
@@ -497,13 +444,7 @@ define(['exports', 'atomic/core', 'atomic/transducers', 'symbol', 'promise', 'at
     return _.count(self.callbacks);
   }
 
-  function dispatch$1(self, command) {
-    dispatch$3(self.source, _.update(command, "path", function (path) {
-      return _.apply(_.conj, self.path, path || []);
-    }));
-  }
-
-  var behave$b = _.does( //_.implement(_.IDisposable, {dispose}), TODO
+  var behave$5 = _.does( //_.implement(_.IDisposable, {dispose}), TODO
   _.implement(_.IPath, {
     path: path
   }), _.implement(_.IDeref, {
@@ -512,8 +453,6 @@ define(['exports', 'atomic/core', 'atomic/transducers', 'symbol', 'promise', 'at
     reset: reset$1
   }), _.implement(_.ISwap, {
     swap: swap$1
-  }), _.implement(IDispatch, {
-    dispatch: dispatch$1
   }), _.implement(ISubscribe, {
     sub: sub$4,
     unsub: unsub$3,
@@ -522,55 +461,7 @@ define(['exports', 'atomic/core', 'atomic/transducers', 'symbol', 'promise', 'at
     pub: reset$1
   }));
 
-  behave$b(Cursor);
-
-  function Events(queued) {
-    this.queued = queued;
-  }
-  function events() {
-    return new Events([]);
-  }
-
-  function raise(self, event) {
-    self.queued.push(event);
-  }
-
-  function release(self) {
-    var released = self.queued;
-    self.queued = [];
-    return released;
-  }
-
-  var behave$a = _.does(_.implement(IEventProvider, {
-    raise: raise,
-    release: release
-  }));
-
-  behave$a(Events);
-
-  function EventDispatcher(events, bus, observer) {
-    this.events = events;
-    this.bus = bus;
-    this.observer = observer;
-  }
-  function eventDispatcher(events, bus, observer) {
-    return new EventDispatcher(events, bus, observer);
-  }
-
-  function handle$3(self, command, next) {
-    next(command);
-
-    _.each(function (event) {
-      handle$4(self.bus, event);
-      pub$4(self.observer, event);
-    }, release$1(self.events));
-  }
-
-  var behave$9 = _.does(_.implement(IMiddleware, {
-    handle: handle$3
-  }));
-
-  behave$9(EventDispatcher);
+  behave$5(Cursor);
 
   function Journal(pos, max, history, cell) {
     this.pos = pos;
@@ -652,7 +543,7 @@ define(['exports', 'atomic/core', 'atomic/transducers', 'symbol', 'promise', 'at
     return self.pos > 0;
   }
 
-  var behave$8 = _.does(_.implement(_.IDeref, {
+  var behave$4 = _.does(_.implement(_.IDeref, {
     deref: deref
   }), _.implement(_.IReset, {
     reset: reset
@@ -670,157 +561,7 @@ define(['exports', 'atomic/core', 'atomic/transducers', 'symbol', 'promise', 'at
     subscribed: subscribed$2
   }));
 
-  behave$8(Journal);
-
-  function MessageHandler(handlers, fallback) {
-    this.handlers = handlers;
-    this.fallback = fallback;
-  }
-  function messageHandler(handlers, fallback) {
-    return new MessageHandler(handlers, fallback);
-  }
-
-  function handle$2(self, command, next) {
-    var type = _.get(command, "type");
-
-    var handler = _.get(self.handlers, type, self.fallback);
-
-    handle$4(handler, command, next);
-  }
-
-  var behave$7 = _.does(_.implement(IMiddleware, {
-    handle: handle$2
-  }));
-
-  behave$7(MessageHandler);
-
-  function MessageProcessor(action) {
-    this.action = action;
-  }
-  function messageProcessor(action) {
-    return new MessageProcessor(action);
-  }
-
-  function handle$1(self, message, next) {
-    self.action(message);
-    next(message);
-  }
-
-  var behave$6 = _.does(_.implement(IMiddleware, {
-    handle: handle$1
-  }));
-
-  behave$6(MessageProcessor);
-
-  function Middleware(handlers) {
-    this.handlers = handlers;
-  }
-  function middleware(handlers) {
-    var _$conj, _handlers, _$apply, _ref;
-
-    return _.doto(new Middleware(handlers || []), (_ref = _, _$apply = _ref.apply, _$conj = _.conj, _handlers = handlers, function apply(_argPlaceholder) {
-      return _$apply.call(_ref, _$conj, _argPlaceholder, _handlers);
-    }));
-  }
-
-  function handles$1(handle) {
-    return _.doto({}, _.specify(IMiddleware, {
-      handle: handle
-    }));
-  }
-
-  function accepts(events, type) {
-    var raise = _.partial(raise$1, events);
-
-    return handles$1(function (x, command, next) {
-      raise(_.assoc(command, "type", type));
-      next(command);
-    });
-  }
-
-  function raises(events, bus, callback) {
-    var raise = _.partial(raise$1, events);
-
-    return handles$1(function (x, command, next) {
-      callback(bus, command, next, raise);
-    });
-  }
-
-  function affects3(bus, f, react) {
-    return handles$1(function (x, event, next) {
-      var _event$path, _$getIn, _ref;
-
-      var past = _.deref(bus),
-          present = event.path ? _.apply(_.updateIn, past, event.path, f, event.args) : _.apply(f, past, event.args),
-          scope = event.path ? (_ref = _, _$getIn = _ref.getIn, _event$path = event.path, function getIn(_argPlaceholder) {
-        return _$getIn.call(_ref, _argPlaceholder, _event$path);
-      }) : _.identity;
-
-      _.reset(bus, present);
-
-      react(bus, event, scope(present), scope(past));
-      next(event);
-    });
-  }
-
-  function affects2(bus, f) {
-    return affects3(bus, f, _.noop);
-  }
-
-  var affects = _.overload(null, null, affects2, affects3);
-
-  function component2(state, callback) {
-    var evts = events(),
-        ware = middleware(),
-        observer = subject();
-    return _.doto(bus(state, ware), function ($bus) {
-      var maps = callback(_.partial(accepts, evts), _.partial(raises, evts, $bus), _.partial(affects, $bus));
-      var commandMap = maps[0],
-          eventMap = maps[1];
-      mut.conj(ware, messageHandler(commandMap), eventDispatcher(evts, messageHandler(eventMap), observer));
-    });
-  }
-
-  function component1(state) {
-    return component2(state, function () {
-      return [{}, {}]; //static components may lack commands that drive state change.
-    });
-  }
-
-  var component = _.overload(null, component1, component2);
-
-  function conj$1(self, handler) {
-    self.handlers = _.conj(self.handlers, handler);
-    self.handler = combine(self.handlers);
-  }
-
-  function combine(handlers) {
-    var f = _.reduce(function (memo, handler) {
-      return function (command) {
-        return handle$4(handler, command, memo);
-      };
-    }, _.noop, _.reverse(handlers));
-
-    function handle(x, command) {
-      return f(command);
-    }
-
-    return _.doto({}, _.specify(IMiddleware, {
-      handle: handle
-    }));
-  }
-
-  function handle(self, command, next) {
-    handle$4(self.handler, command, next);
-  }
-
-  var behave$5 = _.does(_.implement(mut.ITransientCollection, {
-    conj: conj$1
-  }), _.implement(IMiddleware, {
-    handle: handle
-  }));
-
-  behave$5(Middleware);
+  behave$4(Journal);
 
   function Observer(pub, err, complete, terminated) {
     this.pub = pub;
@@ -1215,13 +956,13 @@ define(['exports', 'atomic/core', 'atomic/transducers', 'symbol', 'promise', 'at
     return closed$3(observer) ? (unsub(), _.noop) : unsub;
   }
 
-  var behave$4 = _.does(ireduce, imergable, _.implement(ISubscribe, {
+  var behave$3 = _.does(ireduce, imergable, _.implement(ISubscribe, {
     sub: sub$2,
     unsub: _.noop,
     subscribed: _.constantly(1)
   })); //TODO  `unsub` and `subscribed` mock implementations are for cross compatibility and may be removed post migration
 
-  behave$4(Observable);
+  behave$3(Observable);
 
   function pub$2(self, message) {
     if (!self.terminated) {
@@ -1252,14 +993,14 @@ define(['exports', 'atomic/core', 'atomic/transducers', 'symbol', 'promise', 'at
     return self.terminated;
   }
 
-  var behave$3 = _.does(_.implement(IPublish, {
+  var behave$2 = _.does(_.implement(IPublish, {
     pub: pub$2,
     err: err$1,
     complete: complete$1,
     closed: closed$1
   }));
 
-  behave$3(Observer);
+  behave$2(Observer);
 
   function sub$1(self, observer) {
     sub$7(self.source, observer);
@@ -1276,102 +1017,13 @@ define(['exports', 'atomic/core', 'atomic/transducers', 'symbol', 'promise', 'at
     return subscribed$6(self.source);
   }
 
-  var behave$2 = _.does(_.implement(ISubscribe, {
+  var behave$1 = _.does(_.implement(ISubscribe, {
     sub: sub$1,
     unsub: unsub$1,
     subscribed: subscribed$1
   }));
 
-  behave$2(Readonly);
-
-  function Router(handlers) {
-    this.handlers = handlers;
-  }
-
-  function router1(handlers) {
-    return new Router(handlers);
-  }
-
-  function router0() {
-    return router1([]);
-  }
-
-  var router = _.overload(router0, router1);
-
-  function handler3(pred, callback, how) {
-    var _pred, _how, _callback, _how2;
-
-    return handler2((_how = how, _pred = pred, function how(_argPlaceholder) {
-      return _how(_pred, _argPlaceholder);
-    }), (_how2 = how, _callback = callback, function how(_argPlaceholder2) {
-      return _how2(_callback, _argPlaceholder2);
-    }));
-  }
-
-  function handler2(pred, callback) {
-    var handler = {
-      pred: pred,
-      callback: callback
-    };
-
-    function handles(_, message) {
-      return pred(message) ? handler : null;
-    }
-
-    function dispatch(_, message) {
-      return callback(message);
-    }
-
-    return _.doto(handler, _.specify(_.IHandler, {
-      handles: handles
-    }), _.specify(IDispatch, {
-      dispatch: dispatch
-    }));
-  }
-
-  function handler1(callback) {
-    return handler2(_.constantly(true), callback);
-  }
-
-  var handler = _.overload(null, handler1, handler2, handler3);
-
-  function on(self, pred, callback) {
-    conj(self, handler(pred, callback));
-  }
-
-  function handles(self, message) {
-    var _message, _$handles, _ref;
-
-    return _.detect((_ref = _, _$handles = _ref.handles, _message = message, function handles(_argPlaceholder) {
-      return _$handles.call(_ref, _argPlaceholder, _message);
-    }), self.handlers);
-  }
-
-  function dispatch(self, message) {
-    var handler = handles(self, message);
-
-    if (!handler) {
-      throw new Error("No suitable handler for message.");
-    }
-
-    return dispatch$3(handler, message);
-  }
-
-  function conj(self, handler) {
-    self.handlers = _.append(self.handlers, handler);
-  }
-
-  var behave$1 = _.does(_.implement(IEvented, {
-    on: on
-  }), _.implement(IDispatch, {
-    dispatch: dispatch
-  }), _.implement(_.IHandler, {
-    handles: handles
-  }), _.implement(mut.ITransientCollection, {
-    conj: conj
-  }));
-
-  behave$1(Router);
+  behave$1(Readonly);
 
   function sub(self, observer) {
     if (!self.terminated) {
@@ -1679,7 +1331,7 @@ define(['exports', 'atomic/core', 'atomic/transducers', 'symbol', 'promise', 'at
         callback = _.partial(pub$4, sink);
 
     return audienceDetector(sink, function (status) {
-      var f = status === "active" ? on$1 : off;
+      var f = status === "active" ? on : off;
       f(el, key, callback);
     });
   }
@@ -1690,7 +1342,7 @@ define(['exports', 'atomic/core', 'atomic/transducers', 'symbol', 'promise', 'at
 
     return audienceDetector(sink, function (status) {
       if (status === "active") {
-        on$1(el, key, selector, callback);
+        on(el, key, selector, callback);
       } else {
         off(el, key, callback);
       }
@@ -1780,9 +1432,6 @@ define(['exports', 'atomic/core', 'atomic/transducers', 'symbol', 'promise', 'at
   var renderDiff = _.overload(null, null, renderDiff2, renderDiff3);
 
   (function () {
-    function dispatch(self, args) {
-      return _.apply(self, args);
-    }
 
     function pub(self, msg) {
       self(msg);
@@ -1794,63 +1443,43 @@ define(['exports', 'atomic/core', 'atomic/transducers', 'symbol', 'promise', 'at
       err: _.noop,
       complete: _.noop,
       closed: _.noop
-    }), _.implement(IDispatch, {
-      dispatch: dispatch
     }));
   })();
 
   exports.AudienceDetector = AudienceDetector;
-  exports.Bus = Bus;
   exports.Cell = Cell;
   exports.Cursor = Cursor;
-  exports.EventDispatcher = EventDispatcher;
-  exports.Events = Events;
-  exports.IDispatch = IDispatch;
-  exports.IEventProvider = IEventProvider;
   exports.IEvented = IEvented;
-  exports.IMiddleware = IMiddleware;
   exports.IPublish = IPublish;
   exports.ISubscribe = ISubscribe;
   exports.Journal = Journal;
-  exports.MessageHandler = MessageHandler;
-  exports.MessageProcessor = MessageProcessor;
-  exports.Middleware = Middleware;
   exports.Observable = Observable;
   exports.Observer = Observer;
   exports.Readonly = Readonly;
-  exports.Router = Router;
   exports.Subject = Subject;
-  exports.affects = affects;
   exports.always = always;
   exports.andThen = andThen;
   exports.audienceDetector = audienceDetector;
   exports.broadcast = broadcast;
-  exports.bus = bus;
   exports.calc = calc;
   exports.cell = cell;
   exports.click = click;
   exports.closed = closed$3;
   exports.collect = collect;
   exports.complete = complete$3;
-  exports.component = component;
   exports.computed = computed;
   exports.computes = computes;
   exports.connect = connect;
   exports.current = current;
   exports.cursor = cursor;
   exports.depressed = depressed;
-  exports.dispatch = dispatch$3;
   exports.err = err$3;
   exports.event = event;
-  exports.eventDispatcher = eventDispatcher;
-  exports.events = events;
   exports.fixed = fixed;
   exports.focus = focus;
   exports.fromElement = fromElement;
   exports.fromEvent = fromEvent;
   exports.fromPromise = fromPromise;
-  exports.handle = handle$4;
-  exports.handler = handler;
   exports.hash = hash;
   exports.hist = hist;
   exports.hover = hover;
@@ -1861,24 +1490,18 @@ define(['exports', 'atomic/core', 'atomic/transducers', 'symbol', 'promise', 'at
   exports.journal = journal;
   exports.latest = latest;
   exports.map = map;
-  exports.messageHandler = messageHandler;
-  exports.messageProcessor = messageProcessor;
-  exports.middleware = middleware;
   exports.multiplex = multiplex;
   exports.mutate = mutate;
   exports.observable = observable;
   exports.observer = observer;
   exports.off = off;
-  exports.on = on$1;
+  exports.on = on;
   exports.one = one;
   exports.pipe = pipe;
   exports.pub = pub$4;
-  exports.raise = raise$1;
   exports.readonly = readonly;
-  exports.release = release$1;
   exports.render = render;
   exports.renderDiff = renderDiff;
-  exports.router = router;
   exports.seed = seed;
   exports.signal = signal;
   exports.sub = sub$7;
