@@ -409,9 +409,8 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
 
   })();
 
-  function AddedHandler(model, repo, buffer, commandBus){
+  function AddedHandler(model, buffer, commandBus){
     this.model = model;
-    this.repo = repo;
     this.buffer = buffer;
     this.commandBus = commandBus;
   }
@@ -425,7 +424,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
           type = _.getIn(event, ["args", 0]),
           title = _.getIn(event, ["args", 1]);
 
-      var added = ont.make(self.repo, {id: _.str(id), $type: type});
+      var added = ont.make(_.deref(self.buffer), {id: _.str(id), $type: type});
       //TODO move default determination as attributes to the command where the event is computed
       //TODO expose `make` further down?
       var entity = _.reduce(function(memo, key){
@@ -831,8 +830,8 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
 
   })();
 
-  function QueryHandler(repo, provider){
-    this.repo = repo;
+  function QueryHandler(buffer, provider){
+    this.buffer = buffer;
     this.provider = provider;
   }
 
@@ -841,7 +840,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
   (function(){
 
     function handle(self, command, next){
-      return _.fmap(repos.query(self.repo, _.get(command, "plan")), function(entities){
+      return _.fmap(repos.query(_.deref(self.buffer), _.get(command, "plan")), function(entities){
         $.raise(self.provider, e.queried(entities));
         next(command);
       });
@@ -1108,7 +1107,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
 
   function outline(repo, workspace, options){
     var $state = $.cell(_.journal({
-          workspace: workspace,
+          buffer: w.buffer(repo, workspace),
           root: options.root, //identify the root entities from where rendering begins
           selected: _.into(imm.set(), options.selected || []), //track which entities are selected
           expanded: _.into(imm.set(), options.expanded || []) //track which entities are expanded vs collapsed
@@ -1118,7 +1117,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
         commandBus = sh.bus(),
         eventBus = sh.bus(),
         emitter = $.subject(),
-        buffer = $.cursor(model, ["workspace"]);
+        buffer = $.cursor(model, ["buffer"]);
 
     var entityDriven = _.comp(_.includes(["assert", "retract", "toggle", "destroy", "cast", "tag", "untag", "select", "deselect"], _), _.identifier);
 
@@ -1149,7 +1148,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
           mut.assoc(_, "assert", assertHandler(buffer, events)),
           mut.assoc(_, "retract", retractHandler(buffer, events)),
           mut.assoc(_, "destroy", destroyHandler(buffer, events)),
-          mut.assoc(_, "query", queryHandler(repo, events)),
+          mut.assoc(_, "query", queryHandler(buffer, events)),
           mut.assoc(_, "select", selectHandler(buffer, events)),
           mut.assoc(_, "deselect", deselectHandler(model, events))),
         sh.drainEventsMiddleware(events, eventBus)));
@@ -1171,7 +1170,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
           mut.assoc(_, "skipped", skippedHandler(_.partial(compose, "find"))),
           mut.assoc(_, "lasted", lastedHandler(_.partial(compose, "find"))),
           mut.assoc(_, "loaded", loadedHandler(buffer)),
-          mut.assoc(_, "added", addedHandler(model, repo, buffer, commandBus)),
+          mut.assoc(_, "added", addedHandler(model, buffer, commandBus)),
           mut.assoc(_, "saved", savedHandler(commandBus)),
           mut.assoc(_, "undone", undoneHandler($state)),
           mut.assoc(_, "redone", redoneHandler($state)),
