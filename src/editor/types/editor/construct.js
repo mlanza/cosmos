@@ -11,13 +11,14 @@ import {cursor} from "../../types/cursor/construct.js";
 
 //NOTE a view is capable of returning a seq of all possible `IView.interactions` each implementing `IIdentifiable` and `INamable`.
 //NOTE an interaction is a persistent, validatable object with field schema.  It will be flagged as command or query which will help with processing esp. pipelining.  When successfully validated it has all that it needs to be handled by the handler.  That it can be introspected allows for the UI to help will completing them.
-export function Editor(repo, buffer, model, commandBus, eventBus, emitter, options){
+export function Editor(repo, buffer, model, commandBus, eventBus, emitter, peeked, options){
   this.repo = repo;
   this.buffer = buffer;
   this.model = model;
   this.commandBus = commandBus;
   this.eventBus = eventBus;
   this.emitter = emitter;
+  this.peeked = peeked;
   this.options = options;
 }
 
@@ -34,6 +35,7 @@ export function editor(repo, options){
         commandBus = sh.bus(),
         eventBus = sh.bus(),
         emitter = $.subject(),
+        peeked = $.cell(),
         selected = $.cursor(model, ["selected"]),
         buffer = $.cursor(model, ["buffer"]),
         effects = $.cursor(model, ["effects"]);
@@ -102,7 +104,7 @@ export function editor(repo, options){
       ms.keyedMiddleware("event-id", _.generate(_.iterate(_.inc, 1))),
       sh.teeMiddleware(_.see("event")),
       _.doto(sh.handlerMiddleware(),
-        mut.assoc(_, "peeked", ed.peekedHandler(buffer, model)),
+        mut.assoc(_, "peeked", ed.peekedHandler(buffer, selected, _.does(_.reset(peeked, ?), _.see("peeked")))),
         mut.assoc(_, "found", ed.effectedHandler(effects)),
         mut.assoc(_, "took", ed.effectedHandler(effects)),
         mut.assoc(_, "skipped", ed.effectedHandler(effects)),
@@ -122,6 +124,6 @@ export function editor(repo, options){
         mut.assoc(_, "deselected", ed.deselectedHandler(model))),
       sh.eventMiddleware(emitter)));
 
-  return new Editor(repo, buffer, model, commandBus, eventBus, emitter, options);
+  return new Editor(repo, buffer, model, commandBus, eventBus, emitter, peeked, options);
 }
 

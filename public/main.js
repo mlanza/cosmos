@@ -1,4 +1,4 @@
-define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/transients', 'atomic/reactives', 'atomic/validates', 'atomic/immutables', 'atomic/repos', 'cosmos/ontology', 'cosmos/shell', 'cosmos/work', 'cosmos/tiddology', 'cosmos/editor', 'context'], function(fetch, _, dom, t, mut, $, vd, imm, repos, ont, sh, w, tidd, ed, context){
+define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/transients', 'atomic/reactives', 'atomic/validates', 'atomic/immutables', 'atomic/repos', 'cosmos/ontology', 'cosmos/shell', 'cosmos/work', 'cosmos/tiddology', 'commands', 'cosmos/editor', 'context'], function(fetch, _, dom, t, mut, $, vd, imm, repos, ont, sh, w, tidd, c, ed, context){
 
   //TODO Apply effects (destruction, modification, addition) to datastore.
   //TODO Improve efficiency (with an index decorator?) of looking up an entity in a buffer by pk rather than guid.
@@ -103,12 +103,13 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
 
   })();
 
-  var c = ed.commands;
+  var editor = ed.editor(
+    jsonResource(
+      "../data/outline.json",
+      tidd.tiddology),
+    {root: null});
 
-  var editor = _.doto(
-    ed.editor(
-      jsonResource("../data/outline.json", tidd.tiddology),
-      {root: null}),
+  _.doto(editor,
     $.sub(_,
       t.filter(function(e){
         return e.type === "loaded";
@@ -136,9 +137,6 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
       }),
     $.dispatch(_, c.query()));
 
-  return {
-    editor: editor,
-    c: c
-  }
+  return editor;
 
 });

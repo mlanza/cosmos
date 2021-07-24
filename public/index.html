@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <title>Cosmos</title>
-  <meta name="description" content="Personal Information Manager (Outliner)">
+  <meta name="description" content="Entity Editor">
   <meta name="author" content="Mario T. Lanza">
   <script src="assets/vendor/require.js"></script>
   <script src="assets/boot.js"></script>
@@ -11,8 +11,11 @@
     define('context', function(){
       return {};
     });
+    define('commands', ["cosmos/editor"], function(ed){
+      return ed.commands;
+    });
     require(["cmd/imports"], function(imports){
-      Object.assign(imports, {m: "../main"});
+      Object.assign(imports, {m: "../main", c: "commands"});
     });
     require(['cmd'], function(cmd){
       cmd();
