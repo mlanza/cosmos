@@ -1,3 +1,4 @@
+import * as _ from "atomic/core";
 import {constructs} from "../command/construct.js";
 
 export function Event(type, attrs){

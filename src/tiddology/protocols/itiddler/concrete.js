@@ -1,5 +1,7 @@
 import * as _ from "atomic/core";
+import * as ont from "cosmos/ontology";
 import {ITiddler} from "./instance.js";
+
 export const title = ITiddler.title;
 export const text = ITiddler.text;
 export function tiddles(title, text){
