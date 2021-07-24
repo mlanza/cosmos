@@ -8,6 +8,7 @@ export default {
     'src/shell.js',
     'src/work.js',
     'src/tiddology.js',
+    'src/repos.js',
     'src/editor.js'
   ],
   output: {

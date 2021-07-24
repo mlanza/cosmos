@@ -142,6 +142,9 @@ define('cosmos/tiddology', ["atomic/core", "vendor/cosmos/tiddology"], function(
 define('cosmos/editor', ["atomic/core", "vendor/cosmos/editor"], function(_, ed){
   return _.impart(ed, _.partly);
 });
+define('cosmos/repos', ["atomic/core", "vendor/cosmos/repos"], function(_, re){
+  return _.impart(re, _.partly);
+});
 define('cmd/imports', function(){
   return {
     "_": "atomic/core",
