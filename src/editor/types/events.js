@@ -1,0 +1,23 @@
+import * as sh from "cosmos/shell";
+const e = sh.defs(sh.event, ["found", "took", "skipped", "lasted", "queried", "loaded", "saved", "casted", "toggled", "tagged", "untagged", "asserted", "retracted", "selected", "deselected", "added", "destroyed", "undone", "redone", "flushed", "peeked"]);
+//TODO wrap each with pre-conditions
+export const found = e.found;
+export const took = e.took;
+export const skipped = e.skipped;
+export const lasted = e.lasted;
+export const queried = e.queried;
+export const loaded = e.loaded;
+export const saved = e.saved;
+export const casted = e.casted;
+export const toggled = e.toggled;
+export const tagged = e.tagged;
+export const untagged = e.untagged;
+export const asserted = e.asserted;
+export const selected = e.selected;
+export const deselected = e.deselected;
+export const added = e.added;
+export const destroyed = e.destroyed;
+export const undone = e.undone;
+export const redone = e.redone;
+export const flushed = e.flushed;
+export const peeked = e.peeked;

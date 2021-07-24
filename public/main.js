@@ -1,10 +1,12 @@
-define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/transients', 'atomic/reactives', 'atomic/validates', 'atomic/immutables', 'atomic/repos', 'cosmos/ontology', 'cosmos/shell', 'cosmos/work', 'cosmos/tiddology', 'context'], function(fetch, _, dom, t, mut, $, vd, imm, repos, ont, sh, w, tidd, context){
+define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/transients', 'atomic/reactives', 'atomic/validates', 'atomic/immutables', 'atomic/repos', 'cosmos/ontology', 'cosmos/shell', 'cosmos/work', 'cosmos/tiddology', 'cosmos/editor', 'context'], function(fetch, _, dom, t, mut, $, vd, imm, repos, ont, sh, w, tidd, ed, context){
 
   //TODO Apply effects (destruction, modification, addition) to datastore.
   //TODO Improve efficiency (with an index decorator?) of looking up an entity in a buffer by pk rather than guid.
   //TODO Consider use cases for `init` (e.g. creating new entities or resetting an existing field to factory defaults).
   //TODO Render a form that can be persisted thereby replacing `dynaform`.
   //TODO #FUTURE Optimize like effects (destruction, modification, addition) into aggregate effects before applying them.
+
+  var e = ed.events, c = ed.commands;
 
   var IAssociative = _.IAssociative,
       ISwap = _.ISwap,
@@ -152,9 +154,6 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
 
   })();
 
-  var c = sh.defs(sh.command, ["pipe", "find", "take", "skip", "last", "query", "load", "save", "cast", "toggle", "tag", "untag", "assert", "retract", "select", "deselect", "add", "destroy", "undo", "redo", "flush", "peek"]),
-      e = sh.defs(sh.event, ["found", "took", "skipped", "lasted", "queried", "loaded", "saved", "casted", "toggled", "tagged", "untagged", "asserted", "retracted", "selected", "deselected", "added", "destroyed", "undone", "redone", "flushed", "peeked"]);
-
   function handleExisting(event){
     return function handle(self, command, next){
       var e = Object.assign(event(), command, {type: event().type});
@@ -166,42 +165,6 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     }
   }
 
-  function EffectHandler(provider, effect){
-    this.provider = provider;
-    this.effect = effect;
-  }
-
-  var effectHandler = _.constructs(EffectHandler);
-
-  (function(){
-
-    function handle(self, command, next){
-      $.raise(self.provider, sh.effect(command, self.effect));
-      next(command);
-    }
-
-    return _.doto(EffectHandler,
-      _.implement(IMiddleware, {handle: handle}));
-
-  })();
-
-  function EffectedHandler(effects){
-    this.effects = effects;
-  }
-
-  var effectedHandler = _.constructs(EffectedHandler);
-
-  (function(){
-
-    function handle(self, event, next){
-      _.swap(self.effects, _.conj(_, event));
-      next(event);
-    }
-
-    return _.doto(EffectedHandler,
-      _.implement(IMiddleware, {handle: handle}));
-
-  })();
 
   function PipeHandler(buffer, model, commandBus){
     this.buffer = buffer;
@@ -746,52 +709,6 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
 
   })();
 
-  function SelectHandler(buffer, provider){
-    this.buffer = buffer;
-    this.provider = provider;
-  }
-
-  var selectHandler = _.constructs(SelectHandler);
-
-  (function(){
-
-    function handle(self, command, next){
-      var id = _.get(command, "id");
-      var missing = _.detect(_.complement(_.contains(_.deref(self.buffer), _)), id);
-      if (!missing) {
-        $.raise(self.provider, e.selected([], {id: id}));
-      } else {
-        throw new Error("Entity " + _.str(missing) + " was not present in buffer.");
-      }
-      next(command);
-    }
-
-    return _.doto(SelectHandler,
-      _.implement(IMiddleware, {handle: handle}));
-
-  })();
-
-  function SelectedHandler(model){
-    this.model = model;
-  }
-
-  var selectedHandler = _.constructs(SelectedHandler);
-
-  (function(){
-
-    function handle(self, event, next){
-      var id = _.get(event, "id");
-      _.swap(self.model,
-        _.update(_, "selected",
-          _.apply(_.conj, _, id)));
-      next(event);
-    }
-
-    return _.doto(SelectedHandler,
-      _.implement(IMiddleware, {handle: handle}));
-
-  })();
-
   function DeselectHandler(model, provider){
     this.model = model;
     this.provider = provider;
@@ -1036,10 +953,10 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
         sh.teeMiddleware(_.see("command")),
         _.doto(sh.handlerMiddleware(),
           mut.assoc(_, "pipe", pipeHandler(buffer, model, commandBus)),
-          mut.assoc(_, "find", effectHandler(events, "found")),
-          mut.assoc(_, "take", effectHandler(events, "took")),
-          mut.assoc(_, "skip", effectHandler(events, "skipped")),
-          mut.assoc(_, "last", effectHandler(events, "lasted")),
+          mut.assoc(_, "find", ed.effectHandler(events, "found")),
+          mut.assoc(_, "take", ed.effectHandler(events, "took")),
+          mut.assoc(_, "skip", ed.effectHandler(events, "skipped")),
+          mut.assoc(_, "last", ed.effectHandler(events, "lasted")),
           mut.assoc(_, "peek", peekHandler(events)),
           mut.assoc(_, "load", loadHandler(buffer, events)),
           mut.assoc(_, "add", addHandler(buffer, events)),
@@ -1055,7 +972,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
           mut.assoc(_, "retract", retractHandler(buffer, events)),
           mut.assoc(_, "destroy", destroyHandler(buffer, events)),
           mut.assoc(_, "query", queryHandler(buffer, events)),
-          mut.assoc(_, "select", selectHandler(buffer, events)),
+          mut.assoc(_, "select", ed.selectHandler(buffer, events)),
           mut.assoc(_, "deselect", deselectHandler(model, events))),
         sh.drainEventsMiddleware(events, eventBus)));
 
@@ -1065,10 +982,10 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
         sh.teeMiddleware(_.see("event")),
         _.doto(sh.handlerMiddleware(),
           mut.assoc(_, "peeked", peekedHandler(buffer, model)),
-          mut.assoc(_, "found", effectedHandler(effects)),
-          mut.assoc(_, "took", effectedHandler(effects)),
-          mut.assoc(_, "skipped", effectedHandler(effects)),
-          mut.assoc(_, "lasted", effectedHandler(effects)),
+          mut.assoc(_, "found", ed.effectedHandler(effects)),
+          mut.assoc(_, "took", ed.effectedHandler(effects)),
+          mut.assoc(_, "skipped", ed.effectedHandler(effects)),
+          mut.assoc(_, "lasted", ed.effectedHandler(effects)),
           mut.assoc(_, "loaded", loadedHandler(buffer)),
           mut.assoc(_, "added", addedHandler(model, buffer, commandBus)),
           mut.assoc(_, "saved", savedHandler(commandBus)),
@@ -1080,7 +997,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
           mut.assoc(_, "retracted", retractedHandler(buffer)),
           mut.assoc(_, "destroyed", destroyedHandler(buffer)),
           mut.assoc(_, "queried", queriedHandler(commandBus)),
-          mut.assoc(_, "selected", selectedHandler(model)),
+          mut.assoc(_, "selected", ed.selectedHandler(model)),
           mut.assoc(_, "deselected", deselectedHandler(model))),
         sh.eventMiddleware(emitter)));
 
