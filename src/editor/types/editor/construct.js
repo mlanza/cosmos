@@ -34,6 +34,7 @@ export function editor(repo, options){
         commandBus = sh.bus(),
         eventBus = sh.bus(),
         emitter = $.subject(),
+        selected = $.cursor(model, ["selected"]),
         buffer = $.cursor(model, ["buffer"]),
         effects = $.cursor(model, ["effects"]);
 
@@ -69,7 +70,7 @@ export function editor(repo, options){
       sh.lockingMiddleware(commandBus),
       ms.keyedMiddleware("command-id", _.generate(_.iterate(_.inc, 1))),
       ms.findMiddleware(effects, compile, buffer, entityDriven),
-      ms.selectionMiddleware(model, entityDriven),
+      ms.selectionMiddleware(selected, entityDriven),
       sh.teeMiddleware(_.see("command")),
       _.doto(sh.handlerMiddleware(),
         mut.assoc(_, "pipe", ed.pipeHandler(buffer, model, commandBus)),
@@ -117,7 +118,7 @@ export function editor(repo, options){
         mut.assoc(_, "retracted", ed.retractedHandler(buffer)),
         mut.assoc(_, "destroyed", ed.destroyedHandler(buffer)),
         mut.assoc(_, "queried", ed.queriedHandler(commandBus)),
-        mut.assoc(_, "selected", ed.selectedHandler(model)),
+        mut.assoc(_, "selected", ed.selectedHandler(selected)),
         mut.assoc(_, "deselected", ed.deselectedHandler(model))),
       sh.eventMiddleware(emitter)));
 

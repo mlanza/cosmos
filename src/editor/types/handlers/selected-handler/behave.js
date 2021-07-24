@@ -3,9 +3,8 @@ import * as $ from "atomic/reactives";
 
 function handle(self, event, next){
   const id = _.get(event, "id");
-  _.swap(self.model,
-    _.update(_, "selected",
-      _.apply(_.conj, _, id)));
+  _.swap(self.selected,
+    _.apply(_.conj, _, id));
   next(event);
 }
 

@@ -3,12 +3,10 @@ import * as $ from "atomic/reactives";
 
 function handle(self, message, next){
   if (!_.contains(message, "id") && self.pred(message)) {
-    _.just(
-      self.model,
+    _.just(self.selected,
       _.deref,
-      _.get(_, "selected"), //a sequence!
       _.toArray,
-      _.assoc(message, "id", _),
+      _.assoc(message, "id", ?),
       next);
   } else {
     next(message);

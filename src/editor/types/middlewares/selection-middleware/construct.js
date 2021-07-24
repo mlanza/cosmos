@@ -1,7 +1,7 @@
 import * as _ from "atomic/core";
 
-export function SelectionMiddleware(model, pred){
-  this.model = model;
+export function SelectionMiddleware(selected, pred){
+  this.selected = selected;
   this.pred = pred;
 }
 
