@@ -166,162 +166,39 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     }
   }
 
-  function FindHandler(provider){
+  function EffectHandler(provider, effect){
     this.provider = provider;
+    this.effect = effect;
   }
 
-  var findHandler = _.constructs(FindHandler);
+  var effectHandler = _.constructs(EffectHandler);
 
   (function(){
 
     function handle(self, command, next){
-      $.raise(self.provider, sh.effect(command, "found"));
+      $.raise(self.provider, sh.effect(command, self.effect));
       next(command);
     }
 
-    return _.doto(FindHandler,
+    return _.doto(EffectHandler,
       _.implement(IMiddleware, {handle: handle}));
 
   })();
 
-  function FoundHandler(compose){
-    this.compose = compose;
+  function EffectedHandler(effects){
+    this.effects = effects;
   }
 
-  var foundHandler = _.constructs(FoundHandler);
+  var effectedHandler = _.constructs(EffectedHandler);
 
   (function(){
 
     function handle(self, event, next){
-      var args = _.get(event, "args");
-      switch (_.count(args)) {
-        case 1:
-          var type = _.first(args);
-          self.compose(t.filter(function(entity){
-            return _.first(_.get(entity, "$type")) == type;
-          }));
-          break;
-
-        case 2:
-          var key = _.first(args), value = _.second(args);
-          self.compose(t.filter(function(entity){
-            return _.includes(_.get(entity, key), value);
-          }));
-          break;
-
-      }
+      _.swap(self.effects, _.conj(_, event));
       next(event);
     }
 
-    return _.doto(FoundHandler,
-      _.implement(IMiddleware, {handle: handle}));
-
-  })();
-
-  function TakeHandler(provider){
-    this.provider = provider;
-  }
-
-  var takeHandler = _.constructs(TakeHandler);
-
-  (function(){
-
-    function handle(self, command, next){
-      $.raise(self.provider, sh.effect(command, "took"));
-      next(command);
-    }
-
-    return _.doto(TakeHandler,
-      _.implement(IMiddleware, {handle: handle}));
-
-  })();
-
-  function TookHandler(compose){
-    this.compose = compose;
-  }
-
-  var tookHandler = _.constructs(TookHandler);
-
-  (function(){
-
-    function handle(self, event, next){
-      self.compose(t.take(_.getIn(event, ["args", 0])));
-      next(event);
-    }
-
-    return _.doto(TookHandler,
-      _.implement(IMiddleware, {handle: handle}));
-
-  })();
-
-  function SkipHandler(provider){
-    this.provider = provider;
-  }
-
-  var skipHandler = _.constructs(SkipHandler);
-
-  (function(){
-
-    function handle(self, command, next){
-      $.raise(self.provider, sh.effect(command, "skipped"));
-      next(command);
-    }
-
-    return _.doto(SkipHandler,
-      _.implement(IMiddleware, {handle: handle}));
-
-  })();
-
-  function SkippedHandler(compose){
-    this.compose = compose;
-  }
-
-  var skippedHandler = _.constructs(SkippedHandler);
-
-  (function(){
-
-    function handle(self, event, next){
-      self.compose(t.drop(_.getIn(event, ["args", 0])));
-      next(event);
-    }
-
-    return _.doto(SkippedHandler,
-      _.implement(IMiddleware, {handle: handle}));
-
-  })();
-
-  function LastHandler(provider){
-    this.provider = provider;
-  }
-
-  var lastHandler = _.constructs(LastHandler);
-
-  (function(){
-
-    function handle(self, command, next){
-      $.raise(self.provider, sh.effect(command, "lasted"));
-      next(command);
-    }
-
-    return _.doto(LastHandler,
-      _.implement(IMiddleware, {handle: handle}));
-
-  })();
-
-  function LastedHandler(compose){
-    this.compose = compose;
-  }
-
-  var lastedHandler = _.constructs(LastedHandler);
-
-  (function(){
-
-    function handle(self, event, next){
-      self.compose(t.last(_.getIn(event, ["args", 0])));
-      next(event);
-    }
-
-    return _.doto(LastedHandler,
+    return _.doto(EffectedHandler,
       _.implement(IMiddleware, {handle: handle}));
 
   })();
@@ -378,7 +255,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
 
     function handle(self, event, next){
       _.swap(self.buffer, function(buffer){
-        return w.load(buffer, _.get(event, "args")); //TODO ITransientBuffer.load
+        return w.load(buffer, _.get(event, "args"));
       });
       next(event);
     }
@@ -1019,8 +896,9 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
 
   })();
 
-  function FindMiddleware(model, buffer, pred, lastPipeId){
-    this.model = model;
+  function FindMiddleware(effects, compile, buffer, pred, lastPipeId){
+    this.effects = effects;
+    this.compile = compile;
     this.buffer = buffer;
     this.pred = pred;
     this.lastPipeId = lastPipeId;
@@ -1033,15 +911,16 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
       var pipeId = _.get(message, "pipe-id");
 
       if (_.notEq(pipeId, self.lastPipeId)) {
-        _.swap(self.model, _.assoc(_, "find", null));
+        _.reset(self.effects, []);
         _.log("cleared find cache!");
         self.lastPipeId = pipeId;
       }
 
       if (!_.contains(message, "id") && self.pred(message)) {
-        var f = _.just(self.model, _.deref, _.get(_, "find"));
-        if (f) {
+        var effects = _.deref(self.effects);
+        if (_.seq(effects)) {
           var buffer = _.deref(self.buffer);
+          var f = _.apply(_.comp, _.mapa(self.compile, effects));
           var id = _.into([], _.comp(f, t.map(_.get(_, "id")), t.map(_.first)), buffer);
           var select = _.assoc(message, "id", id);
           next(select);
@@ -1105,9 +984,10 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     this.options = options;
   }
 
-  function outline(repo, workspace, options){
+  function outline(repo, options){
     var $state = $.cell(_.journal({
-          buffer: w.buffer(repo, workspace),
+          buffer: w.buffer(repo),
+          effects: [],
           root: options.root, //identify the root entities from where rendering begins
           selected: _.into(imm.set(), options.selected || []), //track which entities are selected
           expanded: _.into(imm.set(), options.expanded || []) //track which entities are expanded vs collapsed
@@ -1117,23 +997,49 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
         commandBus = sh.bus(),
         eventBus = sh.bus(),
         emitter = $.subject(),
-        buffer = $.cursor(model, ["buffer"]);
+        buffer = $.cursor(model, ["buffer"]),
+        effects = $.cursor(model, ["effects"]);
 
     var entityDriven = _.comp(_.includes(["assert", "retract", "toggle", "destroy", "cast", "tag", "untag", "select", "deselect"], _), _.identifier);
+
+    function compile(event){
+      var args = _.get(event, "args")
+      switch (event.type) { //TODO install via map?
+        case "took":
+          return t.take(_.first(args));
+        case "skipped":
+          return t.drop(_.first(args));
+        case "lasted":
+          return t.last(_.first(args));
+        case "found":
+          switch (_.count(args)) {
+            case 1:
+              var type = _.first(args);
+              return t.filter(function(entity){
+                return _.first(_.get(entity, "$type")) == type;
+              });
+            case 2:
+              var key = _.first(args), value = _.second(args);
+              return t.filter(function(entity){
+                return _.includes(_.get(entity, key), value);
+              });
+          }
+      }
+    }
 
     _.doto(commandBus,
       mut.conj(_,
         sh.lockingMiddleware(commandBus),
         keyedMiddleware("command-id", _.generate(_.iterate(_.inc, 1))),
-        findMiddleware(model, buffer, entityDriven),
+        findMiddleware(effects, compile, buffer, entityDriven),
         selectionMiddleware(model, entityDriven),
         sh.teeMiddleware(_.see("command")),
         _.doto(sh.handlerMiddleware(),
           mut.assoc(_, "pipe", pipeHandler(buffer, model, commandBus)),
-          mut.assoc(_, "find", findHandler(events)),
-          mut.assoc(_, "take", takeHandler(events)),
-          mut.assoc(_, "skip", skipHandler(events)),
-          mut.assoc(_, "last", lastHandler(events)),
+          mut.assoc(_, "find", effectHandler(events, "found")),
+          mut.assoc(_, "take", effectHandler(events, "took")),
+          mut.assoc(_, "skip", effectHandler(events, "skipped")),
+          mut.assoc(_, "last", effectHandler(events, "lasted")),
           mut.assoc(_, "peek", peekHandler(events)),
           mut.assoc(_, "load", loadHandler(buffer, events)),
           mut.assoc(_, "add", addHandler(buffer, events)),
@@ -1153,22 +1059,16 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
           mut.assoc(_, "deselect", deselectHandler(model, events))),
         sh.drainEventsMiddleware(events, eventBus)));
 
-    function compose(key, f){
-      _.just(model, _.swap(_, _.update(_, key, function(g){
-        return g ? _.comp(g, f) : f;
-      })));
-    }
-
     _.doto(eventBus,
       mut.conj(_,
         keyedMiddleware("event-id", _.generate(_.iterate(_.inc, 1))),
         sh.teeMiddleware(_.see("event")),
         _.doto(sh.handlerMiddleware(),
           mut.assoc(_, "peeked", peekedHandler(buffer, model)),
-          mut.assoc(_, "found", foundHandler(_.partial(compose, "find"))),
-          mut.assoc(_, "took", tookHandler(_.partial(compose, "find"))),
-          mut.assoc(_, "skipped", skippedHandler(_.partial(compose, "find"))),
-          mut.assoc(_, "lasted", lastedHandler(_.partial(compose, "find"))),
+          mut.assoc(_, "found", effectedHandler(effects)),
+          mut.assoc(_, "took", effectedHandler(effects)),
+          mut.assoc(_, "skipped", effectedHandler(effects)),
+          mut.assoc(_, "lasted", effectedHandler(effects)),
           mut.assoc(_, "loaded", loadedHandler(buffer)),
           mut.assoc(_, "added", addedHandler(model, buffer, commandBus)),
           mut.assoc(_, "saved", savedHandler(commandBus)),
@@ -1216,7 +1116,6 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
   var ol = _.doto(
     outline(
       jsonResource("../data/outline.json", tidd.tiddology),
-      w.entityWorkspace(),
       {root: null}),
     $.sub(_,
       t.filter(function(e){
