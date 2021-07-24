@@ -4,10 +4,10 @@ import * as w from "cosmos/work";
 import * as ont from "cosmos/ontology";
 
 function handle(self, event, next){
-  var args = _.get(event, "args"),
-      key = _.first(args),
-      value = _.second(args),
-      id = _.get(event, "id");
+  const args = _.get(event, "args"),
+        key = _.first(args),
+        value = _.second(args),
+        id = _.get(event, "id");
 
   _.swap(self.buffer, function(buffer){
     return w.edit(buffer, _.mapa(function(id){

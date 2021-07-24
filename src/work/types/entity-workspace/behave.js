@@ -19,28 +19,28 @@ function query(self, plan){
 
 function load(self, entities){
   return entityWorkspace(_.reduce(function(memo, entity){
-    var id = p.id(entity);
+    const id = p.id(entity);
     return _.contains(memo, id) ? memo : _.assoc(memo, id, entity);
   }, self.loaded, entities), self.changed, _.into(imm.set(), _.map(p.id, entities)));
 }
 
 function add(self, entities){
   return entityWorkspace(self.loaded, _.reduce(function(memo, entity){
-    var id = p.id(entity);
+    const id = p.id(entity);
     return _.contains(memo, id) ? memo : _.assoc(memo, id, entity);
   }, self.changed, entities), _.into(imm.set(), _.map(p.id, entities)));
 }
 
 function edit(self, entities){
   return entityWorkspace(self.loaded, _.reduce(function(memo, entity){
-    var id = p.id(entity);
+    const id = p.id(entity);
     return _.contains(self.loaded, id) || _.contains(memo, id) ? _.assoc(memo, id, entity) : memo;
   }, self.changed, entities), _.into(imm.set(), _.map(p.id, entities)));
 }
 
 function destroy(self, entities){
   return entityWorkspace(self.loaded, _.reduce(function(memo, entity){
-    var id = p.id(entity);
+    const id = p.id(entity);
     return _.contains(self.loaded, id) ? _.assoc(memo, id, null) : _.contains(memo, id) ? _.dissoc(memo, id) : memo;
   }, self.changed, entities), _.into(imm.set(), _.map(p.id, entities)));
 }
@@ -113,8 +113,8 @@ function commands(self){
   return _.just(self.changed,
     _.keys,
     _.mapcat(function(id){
-      var prior   = _.get(self.loaded , id),
-          current = _.get(self.changed, id);
+      const prior   = _.get(self.loaded , id),
+            current = _.get(self.changed, id);
       if (prior && current) {
         if (_.eq(prior, current)) {
           return [];

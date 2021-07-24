@@ -7,13 +7,13 @@ import * as e from "../../events.js";
 
 //It's unavoidable that attributes may not line up on a cast, so cast wisely.
 function handle(self, command, next){
-  var prior = _.get(self.buffer, _.get(command, "id")),
-      id = _.get(command, "id"),
-      $type = _.getIn(command, ["args", 0]);
+  const prior = _.get(self.buffer, _.get(command, "id")),
+        id = _.get(command, "id"),
+        $type = _.getIn(command, ["args", 0]);
   if (prior) {
-    var entity = ont.make(self.buffer, Object.assign({}, prior.attrs, {$type})),
-        title  = tidd.title(prior),
-        text   = tidd.text(prior);
+    const entity = ont.make(self.buffer, Object.assign({}, prior.attrs, {$type})),
+          title  = tidd.title(prior),
+          text   = tidd.text(prior);
     if (title){
       entity = tidd.title(entity, title);
     }

@@ -2,10 +2,10 @@ import * as _ from "atomic/core";
 import * as vd from "atomic/validates";
 
 function reduce(self, xf, init){
-  var memo = init,
-      ys = self;
+  let memo = init,
+        ys = self;
   while(_.seq(ys)){
-    var y = _.first(ys);
+    const y = _.first(ys);
     memo = xf(memo, y);
     ys = _.rest(ys);
   }
@@ -54,7 +54,7 @@ function constraints2(self, constraints){
   return new self.constructor(constraints, self.coll);
 }
 
-var constraints = _.overload(null, constraints1, constraints2);
+const constraints = _.overload(null, constraints1, constraints2);
 
 export default _.does(
   _.forward("coll", _.ISeq, _.INext, _.IInclusive, _.ICounted, _.IIndexed, _.IAssociative),

@@ -22,25 +22,25 @@ export function Editor(repo, buffer, model, commandBus, eventBus, emitter, optio
 }
 
 export function editor(repo, options){
-  var $state = $.cell(_.journal({
-        buffer: w.buffer(repo),
-        effects: [],
-        root: options.root, //identify the root entities from where rendering begins
-        selected: _.into(imm.set(), options.selected || []), //track which entities are selected
-        expanded: _.into(imm.set(), options.expanded || []) //track which entities are expanded vs collapsed
-      })),
-      model = cursor($state),
-      events = $.events(),
-      commandBus = sh.bus(),
-      eventBus = sh.bus(),
-      emitter = $.subject(),
-      buffer = $.cursor(model, ["buffer"]),
-      effects = $.cursor(model, ["effects"]);
+  const $state = $.cell(_.journal({
+          buffer: w.buffer(repo),
+          effects: [],
+          root: options.root, //identify the root entities from where rendering begins
+          selected: _.into(imm.set(), options.selected || []), //track which entities are selected
+          expanded: _.into(imm.set(), options.expanded || []) //track which entities are expanded vs collapsed
+        })),
+        model = cursor($state),
+        events = $.events(),
+        commandBus = sh.bus(),
+        eventBus = sh.bus(),
+        emitter = $.subject(),
+        buffer = $.cursor(model, ["buffer"]),
+        effects = $.cursor(model, ["effects"]);
 
-  var entityDriven = _.comp(_.includes(["assert", "retract", "toggle", "destroy", "cast", "tag", "untag", "select", "deselect"], _), _.identifier);
+  const entityDriven = _.comp(_.includes(["assert", "retract", "toggle", "destroy", "cast", "tag", "untag", "select", "deselect"], _), _.identifier);
 
   function compile(event){
-    var args = _.get(event, "args")
+    const args = _.get(event, "args")
     switch (event.type) { //TODO install via map?
       case "took":
         return t.take(_.first(args));
@@ -51,12 +51,12 @@ export function editor(repo, options){
       case "found":
         switch (_.count(args)) {
           case 1:
-            var type = _.first(args);
+            const type = _.first(args);
             return t.filter(function(entity){
               return _.first(_.get(entity, "$type")) == type;
             });
           case 2:
-            var key = _.first(args), value = _.second(args);
+            const key = _.first(args), value = _.second(args);
             return t.filter(function(entity){
               return _.includes(_.get(entity, key), value);
             });

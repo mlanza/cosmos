@@ -7,7 +7,7 @@ function conj(self, middleware){
 }
 
 function handle(self, message, next){
-  var f = _.reduce(function(memo, middleware){
+  const f = _.reduce(function(memo, middleware){
     return $.handle(middleware, _, memo);
   }, next || _.noop, _.reverse(self.middlewares));
   f(message);

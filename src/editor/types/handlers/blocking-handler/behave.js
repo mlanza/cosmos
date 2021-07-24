@@ -3,10 +3,10 @@ import * as $ from "atomic/reactives";
 import * as ont from "cosmos/ontology";
 
 function handle(self, command, next){
-  var id = _.get(command, "id"),
-      entity = _.get(self.buffer, id);
+  const id = _.get(command, "id"),
+        entity = _.get(self.buffer, id);
   if (entity) {
-    var key = _.get(command, "key");
+    const key = _.get(command, "key");
     if (_.get(ont.fld(entity, key), self.key)) {
       throw new Error("Field `" + key + "` is " + self.key + " and thus cannot " + _.identifier(command) + ".");
     }

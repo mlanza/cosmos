@@ -18,7 +18,7 @@ function load(self, entities){
 }
 
 function add(self, entities){
-  var xs = _.mapcat(p.assertions, entities);
+  const xs = _.mapcat(p.assertions, entities);
   return new self.constructor(self.indexes, p.add(self.workspace, entities));
 }
 

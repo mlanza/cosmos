@@ -9,7 +9,7 @@ function handle(self, message, next){
     next(message);
     self.handling = false;
     if (self.queued.length) {
-      var queued = self.queued;
+      const queued = self.queued;
       self.queued = [];
       _.log("draining queued", queued);
       _.each($.dispatch(self.bus, _), queued);

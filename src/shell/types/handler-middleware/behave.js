@@ -7,7 +7,7 @@ function assoc(self, key, handler){
 }
 
 function handle(self, message, next){
-  var handler = _.get(self.handlers, self.identify(message), self.fallback);
+  const handler = _.get(self.handlers, self.identify(message), self.fallback);
   if (handler){
     $.handle(handler, message, next);
   } else {
