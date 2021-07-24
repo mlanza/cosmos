@@ -6897,6 +6897,28 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
 
   behave$2(Task);
 
+  function UID(id) {
+    this.id = id;
+  }
+
+  UID.prototype.toString = function () {
+    return this.id;
+  };
+
+  function uid0() {
+    var head = Math.random() * 46656 | 0,
+        tail = Math.random() * 46656 | 0;
+    return uid1(("000" + head.toString(36)).slice(-3) + ("000" + tail.toString(36)).slice(-3));
+  }
+
+  function uid1(id) {
+    return new UID(id);
+  }
+
+  var uid = overload(uid0, uid1);
+
+  behave$h(UID);
+
   function isWeakMap(self) {
     return self && self.constructor === WeakMap;
   }
@@ -7439,6 +7461,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   exports.RevSeq = RevSeq;
   exports.Right = Right;
   exports.Task = Task;
+  exports.UID = UID;
   exports.absorb = absorb;
   exports.add = add$3;
   exports.after = after;
@@ -7913,6 +7936,7 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
   exports.treeSeq = treeSeq;
   exports.trim = trim;
   exports.type = type;
+  exports.uid = uid;
   exports.unary = unary;
   exports.unbind = unbind;
   exports.unconj = unconj$1;

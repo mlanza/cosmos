@@ -553,9 +553,9 @@ define(['exports', 'atomic/core', 'atomic/transients', 'immutable', 'symbol'], f
       return hash(self.id);
     }
 
-    _.doto(_.GUID, _.implement(IHash, {
+    _.each(_.implement(IHash, {
       hash: hash$1
-    }));
+    }), [_.GUID, _.UID]);
   })();
 
   Object.defineProperty(exports, 'List', {

@@ -5,8 +5,8 @@ function dispatch(self, message){
   $.dispatch(self.commandBus, message);
 }
 
-function lookup(self, guid){ //TODO drop — for development purposes
-  return _.get(self.buffer, guid);
+function lookup(self, id){ //TODO drop — for development purposes
+  return _.get(self.buffer, id);
 }
 
 function sub(self, observer){ //TODO provide separate set of external events (e.g. don't expose its internals)

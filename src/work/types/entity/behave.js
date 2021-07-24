@@ -25,7 +25,7 @@ function outs(self){ //TODO improve efficiency by using only relational keys
 }
 
 function id(self){
-  return _.guid(self.attrs.id);
+  return _.uid(self.attrs.id);
 }
 
 function fld(self, key){
