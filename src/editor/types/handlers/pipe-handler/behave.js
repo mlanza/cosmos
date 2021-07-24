@@ -4,7 +4,7 @@ import * as $ from "atomic/reactives";
 function handle(self, command, next){
   const commands = _.get(command, "args");
   _.just(commands,
-    _.map(_.assoc(_, "pipe-id", _.guid()), _), //TODO pass guid/seed in as dep
+    _.map(_.assoc(_, "pipe-id", self.ids()), _),
     _.each($.dispatch(self.commandBus, _), _));
   next(command);
 }
