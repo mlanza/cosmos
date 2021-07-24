@@ -82,7 +82,7 @@ export function editor(repo, options){
         mut.assoc(_, "last", ed.effectHandler(events, "lasted")),
         mut.assoc(_, "peek", ed.peekHandler(events)),
         mut.assoc(_, "load", ed.loadHandler(buffer, events)),
-        mut.assoc(_, "add", ed.addHandler(buffer, events)),
+        mut.assoc(_, "add", ed.addHandler(repo, buffer, events)),
         mut.assoc(_, "save", ed.saveHandler(buffer, events)),
         mut.assoc(_, "undo", ed.undoHandler($state, events)),
         mut.assoc(_, "redo", ed.redoHandler($state, events)),

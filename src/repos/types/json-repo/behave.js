@@ -25,6 +25,10 @@ function make(self, attrs){
   return ont.make(_.get(self.ontology, attrs.$type), attrs);
 }
 
+function nextId(){
+  return _.uid();
+}
+
 function commit(self, workspace){
   const body = _.just(workspace, _.deref, _.mapa(w.serialize, _), function(items){
     return JSON.stringify(items, null, "\t");
@@ -40,6 +44,6 @@ function commit(self, workspace){
 }
 
 export default _.does(
-  _.implement(ont.IMaker, {make}),
+  _.implement(ont.IMaker, {make, nextId}),
   _.implement(w.IRepository, {commit}),
   _.implement(repos.IQueryable, {query}));

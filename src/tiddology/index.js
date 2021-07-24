@@ -9,12 +9,12 @@ import {Tiddler, Task} from "./types.js";
 
 export const defaults = _.conj(ont.schema(),
   _.assoc(ont.field("id", ont.entity, function(coll){
-    return ont.recaster(_.guid, _.str, ont.valueCaster(coll));
+    return ont.recaster(_.uid, _.str, ont.valueCaster(coll)); //TODO uid might be an option
   }), "label", "ID"),
   _.assoc(ont.field("title", ont.required), "label", "Title"),
   _.assoc(ont.field("text", ont.optional), "label", "Text"),
   _.assoc(ont.field("child", ont.resolvingCollection(vd.and(vd.unlimited, vd.collOf(vd.isa(Task, Tiddler))), ont.entities), function(coll){
-    return ont.recaster(_.guid, _.identity, ont.valuesCaster(coll));
+    return ont.recaster(_.uid, _.identity, ont.valuesCaster(coll));
   }), "label", "Child"),
   _.assoc(ont.field("tag", ont.unlimited, ont.valuesCaster), "label", "Tag", "appendonly", true),
   _.assoc(ont.field("modified", vd.constrain(ont.optional, vd.collOf(_.isDate)), function(coll){

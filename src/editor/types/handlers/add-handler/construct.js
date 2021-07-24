@@ -1,6 +1,7 @@
 import * as _ from "atomic/core";
 
-export function AddHandler(buffer, provider){
+export function AddHandler(maker, buffer, provider){
+  this.maker = maker,
   this.buffer = buffer;
   this.provider = provider;
 }

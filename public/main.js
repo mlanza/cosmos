@@ -24,8 +24,8 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
           c.select(),
           c.peek()
         ]),
-        c.select([], {id: [_.guid(0)]}),
-        c.tag(["test"], {id: [_.guid(1)]}),
+        c.select([], {id: [_.uid("24wab8")]}),
+        c.tag(["test"], {id: [_.uid("cklqr1")]}),
         c.tag(["cosmos"]),
         c.pipe([
           c.add(["tiddler", "Scooby"]),
@@ -33,7 +33,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
           c.tag(["sleuth"]),
           c.tag(["dog"]),
         ]),
-        c.select([], {id: [_.guid(0), _.guid(1)]}),
+        c.select([], {id: [_.uid("24wab8"), _.uid("cklqr1")]}),
         c.peek()
       ]);
     });
