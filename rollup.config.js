@@ -6,7 +6,7 @@ export default {
   input: [
     'src/ontology.js',
     'src/work.js',
-    'src/tiddology.js',
+    'src/outlines.js',
     'src/repos.js',
     'src/editor.js'
   ],
@@ -52,7 +52,7 @@ export default {
     "atomic/dom",
     "cosmos/ontology",
     "cosmos/work",
-    "cosmos/tiddology",
+    "cosmos/outlines",
     "cosmis/editor"
   ],
   plugins: [

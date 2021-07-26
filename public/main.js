@@ -1,4 +1,4 @@
-define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/transients', 'atomic/reactives', 'atomic/validates', 'atomic/immutables', 'atomic/repos', 'cosmos/ontology', 'atomic/shell', 'cosmos/work', 'cosmos/tiddology', 'commands', 'cosmos/editor', 'cosmos/repos', 'context'], function(fetch, _, dom, t, mut, $, vd, imm, repos, ont, sh, w, tidd, c, ed, re, context){
+define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/transients', 'atomic/reactives', 'atomic/validates', 'atomic/immutables', 'atomic/repos', 'cosmos/ontology', 'atomic/shell', 'cosmos/work', 'cosmos/outlines', 'commands', 'cosmos/editor', 'cosmos/repos', 'context'], function(fetch, _, dom, t, mut, $, vd, imm, repos, ont, sh, w, ol, c, ed, re, context){
 
   //TODO Apply effects (destruction, modification, addition) to datastore.
   //TODO Improve efficiency (with an index decorator?) of looking up an entity in a buffer by pk rather than guid.
@@ -9,7 +9,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
   var editor = ed.editor(
     re.jsonRepo(
       "../data/outline.json",
-      tidd.tiddology),
+      ol.outlines),
     {root: null});
 
   $.sub(editor,
@@ -19,7 +19,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
     function(e){
       _.each(sh.dispatch(editor, _), [
         c.pipe([
-          c.find(["tiddler"]),
+          c.find(["outline"]),
           c.last([5]),
           c.select(),
           c.peek()
@@ -28,7 +28,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
         c.tag(["test"], {id: [_.uid("cklqr1")]}),
         c.tag(["cosmos"]),
         c.pipe([
-          c.add(["tiddler", "Scooby"]),
+          c.add(["outline", "Scooby"]),
           c.select(),
           c.tag(["sleuth"]),
           c.tag(["dog"]),

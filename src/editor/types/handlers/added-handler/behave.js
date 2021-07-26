@@ -3,7 +3,7 @@ import * as sh from "atomic/shell";
 import * as c from "../../commands.js";
 import * as ont from "cosmos/ontology";
 import * as w from "cosmos/work";
-import * as tidd from "cosmos/tiddology";
+import * as ol from "cosmos/outlines";
 
 function handle(self, event, next){
   const id = _.get(event, "id"),
@@ -18,7 +18,7 @@ function handle(self, event, next){
       return _.maybe(_.get(fld, "defaults"), function(defaults){
         return ont.aset(fld, memo, defaults);
       }) || memo;
-    }, tidd.title(added, title), _.keys(added));
+    }, ol.title(added, title), _.keys(added));
 
   _.swap(self.buffer, function(buffer){
     return w.add(buffer, [entity]);

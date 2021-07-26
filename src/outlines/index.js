@@ -5,7 +5,7 @@ import * as ont from "cosmos/ontology";
 export * from "./protocols.js";
 export * from "./protocols/concrete.js";
 export * from "./types.js";
-import {Tiddler, Task} from "./types.js";
+import {Outline, Note} from "./types.js";
 
 export const defaults = _.conj(ont.schema(),
   _.assoc(ont.field("id", ont.entity, function(coll){
@@ -13,7 +13,7 @@ export const defaults = _.conj(ont.schema(),
   }), "label", "ID"),
   _.assoc(ont.field("title", ont.required), "label", "Title"),
   _.assoc(ont.field("text", ont.optional), "label", "Text"),
-  _.assoc(ont.field("child", ont.resolvingCollection(vd.and(vd.unlimited, vd.collOf(vd.isa(Task, Tiddler))), ont.entities), function(coll){
+  _.assoc(ont.field("child", ont.resolvingCollection(vd.and(vd.unlimited, vd.collOf(vd.isa(Outline, Note))), ont.entities), function(coll){
     return ont.recaster(_.uid, _.identity, ont.valuesCaster(coll));
   }), "label", "Child"),
   _.assoc(ont.field("tag", ont.unlimited, ont.valuesCaster), "label", "Tag", "appendonly", true),
@@ -41,15 +41,15 @@ function isImportant(entity){
 
 const toLocaleString = _.invokes(_, "toLocaleString");
 
-export const tiddler =
-  ont.topic(Tiddler,
-    "tiddler",
+export const note =
+  ont.topic(Note,
+    "note",
     _.conj(defaults,
       _.assoc(ont.computedField("flags", [typed]), "label", "Flags")));
 
-export const task =
-  ont.topic(Task,
-    "task",
+export const outline =
+  ont.topic(Outline,
+    "outline",
     _.conj(defaults,
       _.assoc(ont.field("priority", vd.constrain(ont.optional, vd.collOf(vd.choice([1, 2, 3])))), "label", "Priority"),
       _.assoc(ont.field("due", vd.constrain(ont.optional, vd.collOf(_.isDate)), function(coll){
@@ -60,4 +60,4 @@ export const task =
       _.assoc(ont.field("assignee", ont.entities), "label", "Assignee"),
       _.assoc(ont.field("expanded", vd.constrain(ont.required, vd.collOf(_.isBoolean))), "label", "Expanded")));
 
-export const tiddology = _.conj(ont.ontology(), tiddler, task);
+export const outlines = _.conj(ont.ontology(), outline, note);
