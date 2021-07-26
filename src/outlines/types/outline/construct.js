@@ -1,4 +1,4 @@
-export function Task(topic, attrs){
+export function Outline(topic, attrs){
   this.topic = topic;
   this.attrs = attrs;
 }

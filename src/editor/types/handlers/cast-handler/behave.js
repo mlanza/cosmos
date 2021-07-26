@@ -2,7 +2,7 @@ import * as _ from "atomic/core";
 import * as sh from "atomic/shell";
 import * as ont from "cosmos/ontology";
 import * as w from "cosmos/work";
-import * as tidd from "cosmos/tiddology";
+import * as ol from "cosmos/outlines";
 import * as e from "../../events.js";
 
 //It's unavoidable that attributes may not line up on a cast, so cast wisely.
@@ -12,13 +12,13 @@ function handle(self, command, next){
         $type = _.getIn(command, ["args", 0]);
   if (prior) {
     const entity = ont.make(self.buffer, Object.assign({}, prior.attrs, {$type})),
-          title  = tidd.title(prior),
-          text   = tidd.text(prior);
+          title  = ol.title(prior),
+          text   = ol.text(prior);
     if (title){
-      entity = tidd.title(entity, title);
+      entity = ol.title(entity, title);
     }
     if (text){
-      entity = tidd.text(entity, text);
+      entity = ol.text(entity, text);
     }
     _.swap(self.buffer, function(buffer){
       return w.edit(buffer, [entity]);

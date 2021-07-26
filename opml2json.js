@@ -39,13 +39,13 @@ function write(dest){
 }
 
 function transform(source){
-  var typed = {task: "task", note: "tiddler"};
+  var typed = {note: "note"};
   function drill(node, parent){
     function convert(child){
       const id = next();
       const item = {
         id: id,
-        $type: typed[child["@type"]] || "task",
+        $type: child["@type"] || "outline",
         title: child["@text"],
         child: []
       };
@@ -73,7 +73,7 @@ function transform(source){
   }
   const root = {
     id: next(),
-    $type: "task",
+    $type: "outline",
     title: source.opml.head.title,
     child: [],
     modified: source.opml.head.dateModified
