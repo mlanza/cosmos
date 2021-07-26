@@ -42,8 +42,9 @@ export function editor(repo, options){
 
   const entityDriven = _.comp(_.includes(["assert", "retract", "toggle", "destroy", "cast", "tag", "untag", "select", "deselect"], _), _.identifier);
 
-  function compile(event){
-    const args = _.get(event, "args")
+  function compile(self, event){
+    const args = _.get(event, "args"),
+          buffer = _.deref(self.buffer);
     switch (event.type) { //TODO install via map?
       case "took":
         return t.take(_.first(args));
@@ -51,6 +52,10 @@ export function editor(repo, options){
         return t.drop(_.first(args));
       case "lasted":
         return t.last(_.first(args));
+      case "dirtied":
+        return t.filter(_.comp(w.updated(buffer, ?), w.id));
+      case "freshed":
+        return t.filter(_.comp(w.created(buffer, ?), w.id));
       case "found":
         switch (_.count(args)) {
           case 1:
@@ -80,6 +85,8 @@ export function editor(repo, options){
         mut.assoc(_, "take", ed.effectHandler(events, "took")),
         mut.assoc(_, "skip", ed.effectHandler(events, "skipped")),
         mut.assoc(_, "last", ed.effectHandler(events, "lasted")),
+        mut.assoc(_, "dirty", ed.effectHandler(events, "dirtied")),
+        mut.assoc(_, "fresh", ed.effectHandler(events, "freshed")),
         mut.assoc(_, "peek", ed.peekHandler(events)),
         mut.assoc(_, "load", ed.loadHandler(buffer, events)),
         mut.assoc(_, "add", ed.addHandler(repo, buffer, events)),
@@ -109,6 +116,8 @@ export function editor(repo, options){
         mut.assoc(_, "took", ed.effectedHandler(effects)),
         mut.assoc(_, "skipped", ed.effectedHandler(effects)),
         mut.assoc(_, "lasted", ed.effectedHandler(effects)),
+        mut.assoc(_, "dirtied", ed.effectedHandler(effects)),
+        mut.assoc(_, "freshed", ed.effectedHandler(effects)),
         mut.assoc(_, "loaded", ed.loadedHandler(buffer)),
         mut.assoc(_, "added", ed.addedHandler(model, buffer, commandBus)),
         mut.assoc(_, "saved", ed.savedHandler(commandBus)),

@@ -20,7 +20,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
       _.each(sh.dispatch(editor, _), [
         c.pipe([
           c.find(["outline"]),
-          c.last([5]),
+          c.last([2]),
           c.select(),
           c.peek()
         ]),

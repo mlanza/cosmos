@@ -24,6 +24,10 @@ function load(self, entities){
   }, self.loaded, entities), self.changed, _.into(imm.set(), _.map(p.id, entities)));
 }
 
+function loaded(self, id){
+  return _.contains(self.loaded, id);
+}
+
 function add(self, entities){
   return entityWorkspace(self.loaded, _.reduce(function(memo, entity){
     const id = p.id(entity);
@@ -38,6 +42,11 @@ function edit(self, entities){
   }, self.changed, entities), _.into(imm.set(), _.map(p.id, entities)));
 }
 
+export function edited(self, entity){
+  const id = p.id(entity);
+  return _.contains(self.loaded, id) && _.contains(self.changed, id);
+}
+
 function destroy(self, entities){
   return entityWorkspace(self.loaded, _.reduce(function(memo, entity){
     const id = p.id(entity);
@@ -45,12 +54,12 @@ function destroy(self, entities){
   }, self.changed, entities), _.into(imm.set(), _.map(p.id, entities)));
 }
 
-function dirty(self, entity){
-  return _.notEq(entity, _.get(self.loaded, p.id(entity)));
-}
-
 function changes(self){
   return _.count(_.keys(self.changed)) ? transaction(self, context.userId) : null;
+}
+
+function changed(self, id){
+  return _.contains(self.changed, id);
 }
 
 function includes(self, entity){
@@ -153,7 +162,7 @@ export default _.does(
   _.implement(IEntity, {id}),
   _.implement(ITransaction, {commands}),
   _.implement(IResolver, {resolve}), //TODO
-  _.implement(IBuffer, {dirty, load, add, edit, destroy, changes, touched}),
+  _.implement(IBuffer, {load, loaded, add, edit, destroy, changes, changed, touched}),
   _.implement(repos.IQueryable, {query}),
   _.implement(_.IIndexed, {nth}),
   _.implement(_.ICounted, {count}),

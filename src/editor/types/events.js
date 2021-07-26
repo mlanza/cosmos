@@ -1,5 +1,5 @@
 import * as sh from "atomic/shell";
-const e = sh.defs(sh.event, ["found", "took", "skipped", "lasted", "queried", "loaded", "saved", "casted", "toggled", "tagged", "untagged", "asserted", "retracted", "selected", "deselected", "added", "destroyed", "undone", "redone", "flushed", "peeked"]);
+const e = sh.defs(sh.event, ["found", "took", "skipped", "lasted", "queried", "loaded", "saved", "casted", "toggled", "tagged", "untagged", "asserted", "retracted", "selected", "deselected", "added", "destroyed", "undone", "redone", "flushed", "peeked", "dirtied"]);
 //TODO wrap each with pre-conditions
 export const found = e.found;
 export const took = e.took;
@@ -22,3 +22,5 @@ export const undone = e.undone;
 export const redone = e.redone;
 export const flushed = e.flushed;
 export const peeked = e.peeked;
+export const dirtied = e.dirtied;
+export const fresh = e.freshed;

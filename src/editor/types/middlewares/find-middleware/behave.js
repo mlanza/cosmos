@@ -15,7 +15,7 @@ function handle(self, message, next){
     const effects = _.deref(self.effects);
     if (_.seq(effects)) {
       const buffer = _.deref(self.buffer),
-            f = _.apply(_.comp, _.mapa(self.compile, effects)),
+            f = _.apply(_.comp, _.mapa(_.partial(self.compile, self), effects)),
             id = _.into([], _.comp(f, t.map(_.get(_, "id")), t.map(_.first)), buffer),
             select = _.assoc(message, "id", id);
       next(select);
