@@ -3,3 +3,15 @@ import * as p from "./protocols/concrete.js";
 export * from "./protocols.js";
 export * from "./protocols/concrete.js";
 export * from "./types.js";
+
+export function destroyed(self, id){
+  return _.contains(self, id) && _.get(self, id) == null;
+}
+
+export function created(self, id){
+  return !p.loaded(self, id) && p.changed(self, id);
+}
+
+export function updated(self, id){
+  return p.loaded(self, id) && p.changed(self, id);
+}

@@ -27,12 +27,12 @@ function destroy(self, entities){
   return fmap(self, p.destroy(?, entities));
 }
 
-function dirty(self, entity){
-  return p.dirty(self.workspace, entity);
-}
-
 function changes(self){
   return p.changes(self.workspace);
+}
+
+function changed(self, id){
+  return p.changed(self.workspace, id);
 }
 
 function lookup(self, id){
@@ -47,6 +47,10 @@ function load(self, entities){
   return fmap(self, p.load(?, entities));
 }
 
+function loaded(self, id){
+  return p.loaded(self.workspace, id);
+}
+
 function repo(self){
   return self.repo;
 }
@@ -57,7 +61,7 @@ function fmap(self, f){
 
 export default _.does(
   _.forward("workspace", _.IReduce),
-  _.implement(IBuffer, {load, edit, destroy, add, dirty, changes, repo}),
+  _.implement(IBuffer, {load, loaded, edit, destroy, add, changes, changed, repo}),
   _.implement(_.IFunctor, {fmap}),
   _.implement(_.IAssociative, {contains}),
   _.implement(_.ILookup, {lookup}),

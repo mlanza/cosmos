@@ -1,5 +1,5 @@
 import * as sh from "atomic/shell";
-const c = sh.defs(sh.command, ["pipe", "find", "take", "skip", "last", "query", "load", "save", "cast", "toggle", "tag", "untag", "assert", "retract", "select", "deselect", "add", "destroy", "undo", "redo", "flush", "peek"]);
+const c = sh.defs(sh.command, ["pipe", "find", "take", "skip", "last", "query", "load", "save", "cast", "toggle", "tag", "untag", "assert", "retract", "select", "deselect", "add", "destroy", "undo", "redo", "flush", "peek", "dirty", "fresh"]);
 //TODO wrap each with pre-conditions
 export const pipe = c.pipe;
 export const find = c.find;
@@ -22,3 +22,5 @@ export const undo = c.undo;
 export const redo = c.redo;
 export const flush = c.flush;
 export const peek = c.peek;
+export const dirty = c.dirty;
+export const fresh = c.fresh;
