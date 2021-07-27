@@ -11,8 +11,8 @@ import * as p from "../../protocols/concrete.js";
 function assertions(self){
   const id = p.id(self);
   return _.mapcat(function(key){
-    const fld = ont.fld(self, key);
-    return _.get(fld, "computed") ? [] : _.map(function(value){
+    const field = ont.fld(self, key);
+    return _.get(field, "computed") ? [] : _.map(function(value){
       return assertion(id, key, value);
     }, _.get(self, key));
   }, _.filter(_.notEq(_, "id"), _.keys(self))); //TODO identify pk with metadata
@@ -32,10 +32,6 @@ function fld(self, key){
   return ont.fld(self.topic, key) || _.assoc(_.isArray(_.get(self.attrs, key))
     ? ont.field(key, ont.unlimited, ont.valuesCaster)
     : ont.field(key, ont.optional, ont.valueCaster), "missing", true);
-}
-
-function kind(self){ //TODO use?
-  return _.identifier(self.topic);
 }
 
 function lookup(self, key){
@@ -76,5 +72,5 @@ export default _.does(
   _.implement(_.IMap, {keys, dissoc}),
   _.implement(_.ILookup, {lookup}),
   _.implement(_.IAssociative, {assoc, contains}),
-  _.implement(ont.IKind, {fld, kind}));
+  _.implement(ont.IStruct, {fld}));
 
