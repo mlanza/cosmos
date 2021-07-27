@@ -1,5 +1,4 @@
 import * as _ from "atomic/core";
-export const IKind = _.protocol({
-  kind: null,
+export const IStruct = _.protocol({
   fld: null
 });

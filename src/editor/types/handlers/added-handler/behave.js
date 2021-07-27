@@ -14,9 +14,9 @@ function handle(self, event, next){
   //TODO move default determination as attributes to the command where the event is computed
   //TODO expose `make` further down?
   const entity = _.reduce(function(memo, key){
-      const fld = ont.fld(memo, key);
-      return _.maybe(_.get(fld, "defaults"), function(defaults){
-        return ont.aset(fld, memo, defaults);
+      const field = ont.fld(memo, key);
+      return _.maybe(_.get(field, "defaults"), function(defaults){
+        return ont.aset(field, memo, defaults);
       }) || memo;
     }, ol.title(added, title), _.keys(added));
 

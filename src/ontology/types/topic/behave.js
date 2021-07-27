@@ -1,5 +1,5 @@
 import * as _ from "atomic/core";
-import {IKind} from "../../protocols/ikind/instance.js";
+import {IStruct} from "../../protocols/istruct/instance.js";
 import {IMaker} from "../../protocols/imaker/instance.js";
 
 function lookup(self, key){
@@ -35,7 +35,7 @@ function keys(self){
 }
 
 export default _.does(
-  _.implement(IKind, {fld}),
+  _.implement(IStruct, {fld}),
   _.implement(IMaker, {make}),
   _.implement(_.ILookup, {lookup}),
   _.implement(_.IAssociative, {assoc, contains}),
