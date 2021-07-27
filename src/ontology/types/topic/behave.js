@@ -7,7 +7,7 @@ function lookup(self, key){
 }
 
 function assoc(self, key, value){
-  return new self.constructor(self.type, _.assoc(self.attrs, key, value), self.schema, self.resource);
+  return new self.constructor(self.type, _.assoc(self.attrs, key, value), self.struct, self.resource);
 }
 
 function contains(self, key){
@@ -27,11 +27,11 @@ function identifier(self){
 }
 
 function fld(self, key){
-  return _.get(self.schema, key);
+  return _.get(self.struct, key);
 }
 
 function keys(self){
-  return _.keys(self.schema);
+  return _.keys(self.struct);
 }
 
 export default _.does(
