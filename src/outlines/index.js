@@ -7,7 +7,7 @@ export * from "./protocols/concrete.js";
 export * from "./types.js";
 import {Outline, Note} from "./types.js";
 
-export const defaults = _.conj(ont.schema(),
+export const defaults = _.conj(ont.struct(),
   _.assoc(ont.field("id", ont.entity, function(coll){
     return ont.recaster(_.uid, _.str, ont.valueCaster(coll)); //TODO uid might be an option
   }), "label", "ID"),
