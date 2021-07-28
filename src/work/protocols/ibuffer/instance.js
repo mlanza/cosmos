@@ -3,10 +3,10 @@ export const IBuffer = _.protocol({
   repo: null, //the source of the data
   touched: null, //entities touched during the last operation - useful when diffing before/after model snapshots
   load: null, //add existing entity from domain to workspace
-  loaded: null,
-  add: null, //add new entity to workspace
-  edit: null, //update entity present in workspace
+  update: null, //add new or modified entity to workspace
   destroy: null, //delete entity present in workspace
+  transact: null, //update via transaction, potentially a protocol of its own
   changes: null, //changed entities
-  changed: null
+  loaded: null, //was id loaded?
+  changed: null //was id changed?
 });

@@ -2,7 +2,7 @@ import * as _ from "atomic/core";
 import * as imm from "atomic/immutables";
 import * as repos from "atomic/repos";
 import * as p from "../../protocols/concrete.js";
-import {entityWorkspace} from "./construct.js";
+import {entityWorkspace, c} from "./construct.js";
 import {transaction} from "../transaction/construct.js";
 import {change} from "../change/construct.js";
 import {IEntity} from "../../protocols/ientity/instance.js";
@@ -17,41 +17,64 @@ function query(self, plan){
   }, _.seq(self));
 }
 
+function transact(self, txn){
+  const args = _.reduce(function([loaded, changed, ids], cmd){
+    const type = _.identifier(cmd),
+          args = _.get(cmd, "args");
+    switch(type) {
+      case "load":
+        return [
+          _.reduce(function(memo, entity){
+            return _.assoc(memo, p.id(entity), entity);
+          }, loaded, args),
+          changed,
+          _.reduce(function(memo, entity){
+            return _.conj(memo, p.id(entity));
+          }, ids, args)
+        ];
+      case "update":
+        return [
+          loaded,
+          _.reduce(function(memo, entity){
+            return _.assoc(memo, p.id(entity), entity);
+          }, changed, args),
+          _.reduce(function(memo, entity){
+            return _.conj(memo, p.id(entity));
+          }, ids, args)
+        ];
+      case "destroy":
+        return [
+          loaded,
+          _.reduce(function(memo, id){
+            return _.assoc(memo, id, null);
+          }, changed, args),
+          _.reduce(_.conj, ids, args)
+        ];
+    }
+    return [loaded, _changed, ids];
+  }, [self.loaded, self.changed, []], txn);
+  return entityWorkspace(args[0], args[1], imm.set(args[2]));
+}
+
 function load(self, entities){
-  return entityWorkspace(_.reduce(function(memo, entity){
-    const id = p.id(entity);
-    return _.contains(memo, id) ? memo : _.assoc(memo, id, entity);
-  }, self.loaded, entities), self.changed, _.into(imm.set(), _.map(p.id, entities)));
+  return transact(self, [c.load(entities)]);
 }
 
 function loaded(self, id){
   return _.contains(self.loaded, id);
 }
 
-function add(self, entities){
-  return entityWorkspace(self.loaded, _.reduce(function(memo, entity){
-    const id = p.id(entity);
-    return _.contains(memo, id) ? memo : _.assoc(memo, id, entity);
-  }, self.changed, entities), _.into(imm.set(), _.map(p.id, entities)));
+function update(self, entities){
+  return transact(self, [c.update(entities)]);
 }
 
-function edit(self, entities){
-  return entityWorkspace(self.loaded, _.reduce(function(memo, entity){
-    const id = p.id(entity);
-    return _.contains(self.loaded, id) || _.contains(memo, id) ? _.assoc(memo, id, entity) : memo;
-  }, self.changed, entities), _.into(imm.set(), _.map(p.id, entities)));
-}
-
-export function edited(self, entity){
+export function updated(self, entity){
   const id = p.id(entity);
   return _.contains(self.loaded, id) && _.contains(self.changed, id);
 }
 
-function destroy(self, entities){
-  return entityWorkspace(self.loaded, _.reduce(function(memo, entity){
-    const id = p.id(entity);
-    return _.contains(self.loaded, id) ? _.assoc(memo, id, null) : _.contains(memo, id) ? _.dissoc(memo, id) : memo;
-  }, self.changed, entities), _.into(imm.set(), _.map(p.id, entities)));
+function destroy(self, ids){
+  return transact(self, [c.destroy(ids)]);
 }
 
 function changes(self){
@@ -162,7 +185,7 @@ export default _.does(
   _.implement(IEntity, {id}),
   _.implement(ITransaction, {commands}),
   _.implement(IResolver, {resolve}), //TODO
-  _.implement(IBuffer, {load, loaded, add, edit, destroy, changes, changed, touched}),
+  _.implement(IBuffer, {load, update, destroy, transact, changes, loaded, changed, touched}),
   _.implement(repos.IQueryable, {query}),
   _.implement(_.IIndexed, {nth}),
   _.implement(_.ICounted, {count}),
