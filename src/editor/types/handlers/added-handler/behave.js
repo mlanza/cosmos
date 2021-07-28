@@ -21,7 +21,7 @@ function handle(self, event, next){
     }, ol.title(added, title), _.keys(added));
 
   _.swap(self.buffer, function(buffer){
-    return w.add(buffer, [entity]);
+    return w.update(buffer, [entity]);
   });
 
   //TODO create middleware which clears selections after certain actions, remove `model`

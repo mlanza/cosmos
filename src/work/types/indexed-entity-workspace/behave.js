@@ -17,17 +17,16 @@ function load(self, entities){
   return new self.constructor(self.indexes, p.load(self.workspace, entities));
 }
 
-function add(self, entities){
-  const xs = _.mapcat(p.assertions, entities);
-  return new self.constructor(self.indexes, p.add(self.workspace, entities));
-}
-
-function edit(self, entities){
-  return new self.constructor(self.indexes, p.edit(self.workspace, entities));
+function update(self, entities){
+  return new self.constructor(self.indexes, p.update(self.workspace, entities));
 }
 
 function destroy(self, entities){
   return new self.constructor(self.indexes, p.destroy(self.workspace, entities));
+}
+
+function transact(self, commands){
+  return new self.constructor(self.indexes, p.transact(self.workspace, commands));
 }
 
 function dissoc(self, id){
@@ -37,7 +36,7 @@ function dissoc(self, id){
 export default _.does(
   _.forward("workspace", _.IMap, _.ISeq, _.INext, _.ISeqable, _.ILookup, _.IReduce, _.ICounted, _.IInclusive, _.IAssociative, _.IIndexed, IEntity, ITransaction, IResolver),
   _.implement(repos.IQueryable, {query}),
-  _.implement(IBuffer, {load, add, edit, destroy}),
+  _.implement(IBuffer, {load, update, destroy, transact}),
   _.implement(_.IMap, {dissoc}),
   _.implement(_.IEmptyableCollection, {empty}));
 

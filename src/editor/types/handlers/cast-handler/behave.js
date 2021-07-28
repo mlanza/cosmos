@@ -21,7 +21,7 @@ function handle(self, command, next){
       entity = ol.text(entity, text);
     }
     _.swap(self.buffer, function(buffer){
-      return w.edit(buffer, [entity]);
+      return w.update(buffer, [entity]);
     });
     sh.raise(self.provider, e.casted([id, type]));
   }

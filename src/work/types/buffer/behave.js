@@ -15,16 +15,16 @@ function query(self, plan){
   return repos.query(self.repo, plan);
 }
 
-function edit(self, entities){
-  return fmap(self, p.edit(?, entities));
-}
-
-function add(self, entities){
-  return fmap(self, p.add(?, entities));
+function update(self, entities){
+  return fmap(self, p.update(?, entities));
 }
 
 function destroy(self, entities){
   return fmap(self, p.destroy(?, entities));
+}
+
+function transact(self, commands){
+  return fmap(self, p.transact(?, commands));
 }
 
 function changes(self){
@@ -61,7 +61,7 @@ function fmap(self, f){
 
 export default _.does(
   _.forward("workspace", _.IReduce),
-  _.implement(IBuffer, {load, loaded, edit, destroy, add, changes, changed, repo}),
+  _.implement(IBuffer, {load, update, destroy, transact, loaded, changed, changes, repo}),
   _.implement(_.IFunctor, {fmap}),
   _.implement(_.IAssociative, {contains}),
   _.implement(_.ILookup, {lookup}),

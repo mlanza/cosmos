@@ -1,10 +1,10 @@
 import {IBuffer} from "./instance.js";
 export const repo = IBuffer.repo;
-export const touched = IBuffer.touched;
 export const load = IBuffer.load;
-export const loaded = IBuffer.loaded;
-export const add = IBuffer.add;
-export const edit = IBuffer.edit;
+export const update = IBuffer.update;
 export const destroy = IBuffer.destroy;
+export const transact = IBuffer.transact;
 export const changes = IBuffer.changes;
+export const loaded = IBuffer.loaded;
 export const changed = IBuffer.changed;
+export const touched = IBuffer.touched;
