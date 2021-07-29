@@ -3,11 +3,8 @@ import * as imm from "atomic/immutables";
 import * as repos from "atomic/repos";
 import * as p from "../../protocols/concrete.js";
 import {entityWorkspace, c} from "./construct.js";
-import {transaction} from "../transaction/construct.js";
-import {change} from "../change/construct.js";
 import {IEntity} from "../../protocols/ientity/instance.js";
 import {IBuffer} from "../../protocols/ibuffer/instance.js";
-import {ITransaction} from "../../protocols/itransaction/instance.js";
 import {IResolver} from "../../protocols/iresolver/instance.js";
 import {buffer as empty} from "../buffer/construct.js";
 
@@ -78,7 +75,9 @@ function destroy(self, ids){
 }
 
 function changes(self){
-  return _.count(_.keys(self.changed)) ? transaction(self, context.userId) : null;
+  return self.changed |> _.keys |> _.map(function(id){
+    return [_.get(self.changed, id), _.get(self.loaded, id)];
+  }, ?);
 }
 
 function changed(self, id){
@@ -141,30 +140,6 @@ function id(self){
   return self.id;
 }
 
-function commands(self){
-  return _.just(self.changed,
-    _.keys,
-    _.mapcat(function(id){
-      const prior   = _.get(self.loaded , id),
-            current = _.get(self.changed, id);
-      if (prior && current) {
-        if (_.eq(prior, current)) {
-          return [];
-        } else if (prior.constructor !== current.constructor) { //type changed
-          return [change(id, prior, null, 'destroy'), change(id, null, current, 'add')];
-        } else {
-          return [change(id, prior, current, 'modify')];
-        }
-      } else if (prior) {
-        return [change(id, prior, null, 'destroy')];
-      } else if (current) {
-        return [change(id, null, current, 'add')];
-      } else {
-        return [];
-      }
-    }, _));
-}
-
 function resolve(self, refs){
   return _.mapa(function(ref){
     return _.detect(function(entity){
@@ -183,7 +158,6 @@ function nth(self, idx){
 
 export default _.does(
   _.implement(IEntity, {id}),
-  _.implement(ITransaction, {commands}),
   _.implement(IResolver, {resolve}), //TODO
   _.implement(IBuffer, {load, update, destroy, transact, changes, loaded, changed, touched}),
   _.implement(repos.IQueryable, {query}),
