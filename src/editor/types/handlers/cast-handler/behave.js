@@ -7,11 +7,11 @@ import * as e from "../../events.js";
 
 //It's unavoidable that attributes may not line up on a cast, so cast wisely.
 function handle(self, command, next){
-  const prior = _.get(self.buffer, _.get(command, "id")),
-        id = _.get(command, "id"),
-        $type = _.getIn(command, ["args", 0]);
-  if (prior) {
-    const entity = ont.make(self.buffer, Object.assign({}, prior.attrs, {$type})),
+  const id = _.get(command, "id"),
+        args = _.get(command, "args"),
+        $type = _.first(args);
+  _.swap(self.buffer, w.modify(?, function(prior, buffer){
+    const entity = ont.make(buffer, Object.assign({}, prior.attrs, {$type})),
           title  = ol.title(prior),
           text   = ol.text(prior);
     if (title){
@@ -20,11 +20,9 @@ function handle(self, command, next){
     if (text){
       entity = ol.text(entity, text);
     }
-    _.swap(self.buffer, function(buffer){
-      return w.update(buffer, [entity]);
-    });
-    sh.raise(self.provider, e.casted([id, type]));
-  }
+    return entity;
+  }, ...id));
+  sh.raise(self.provider, sh.effect(command, "casted"));
   next(command);
 }
 

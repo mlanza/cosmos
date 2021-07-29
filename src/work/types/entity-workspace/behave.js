@@ -53,19 +53,15 @@ function transact(self, txn){
   return entityWorkspace(args[0], args[1], imm.set(args[2]));
 }
 
-function load(self, entities){
+function load(self, ...entities){
   return transact(self, [c.load(entities)]);
 }
 
-function loaded(self, id){
-  return _.contains(self.loaded, id);
-}
-
-function update(self, entities){
+function update(self, ...entities){
   return transact(self, [c.update(entities)]);
 }
 
-function destroy(self, ids){
+function destroy(self, ...ids){
   return transact(self, [c.destroy(ids)]);
 }
 
@@ -77,10 +73,6 @@ function change(self, id){
 
 function changes(self){
   return self.changed |> _.keys |> _.map(change(self, ?), ?) |> _.compact;
-}
-
-function changed(self, id){
-  return _.contains(self.changed, id);
 }
 
 function includes(self, entity){
@@ -158,7 +150,7 @@ function nth(self, idx){
 export default _.does(
   _.implement(IEntity, {id}),
   _.implement(IResolver, {resolve}), //TODO
-  _.implement(IBuffer, {load, update, destroy, transact, change, changes, loaded, changed, touched}),
+  _.implement(IBuffer, {load, update, destroy, transact, change, changes, touched}),
   _.implement(repos.IQueryable, {query}),
   _.implement(_.IIndexed, {nth}),
   _.implement(_.ICounted, {count}),

@@ -4,10 +4,7 @@ import * as w from "cosmos/work";
 
 function handle(self, event, next){
   const id = _.get(event, "id");
-  _.swap(self.buffer, function(buffer){
-    return w.destroy(buffer, _.mapa(_.get(buffer, _), id));
-  });
-
+  _.swap(self.buffer, w.destroy(?, ...id));
   next(event);
 }
 
