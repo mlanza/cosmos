@@ -20,5 +20,5 @@ export function destroyed(self, id){
 }
 
 export function modify(self, f, ...ids){
-  return p.update(self, ..._.mapa(_.comp(f(?, self), _.get(self, ?)), ids));
+  return p.update(self, ..._.mapa(_.comp(f, _.get(self, ?)), ids));
 }

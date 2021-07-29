@@ -9,9 +9,10 @@ import * as e from "../../events.js";
 function handle(self, command, next){
   const id = _.get(command, "id"),
         args = _.get(command, "args"),
-        $type = _.first(args);
-  _.swap(self.buffer, w.modify(?, function(prior, buffer){
-    const entity = ont.make(buffer, Object.assign({}, prior.attrs, {$type})),
+        $type = _.first(args),
+        make = ont.make(_.deref(self.buffer), ?)
+  _.swap(self.buffer, w.modify(?, function(prior){
+    const entity = make(Object.assign({}, prior.attrs, {$type})),
           title  = ol.title(prior),
           text   = ol.text(prior);
     if (title){
