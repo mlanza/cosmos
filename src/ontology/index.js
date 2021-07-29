@@ -20,7 +20,7 @@ function assert3(self, key, value){
 export const assert = _.overload(null, null, null, assert3, _.reducing(assert3));
 
 function retract3(self, key, value){
-  return reassign(self, key, _.branch(_.includes(_, value), _.remove(_.eq(_, value), _), _.identity));
+  return reassign(self, key, _.branch(_.includes(_, value), _.unconj(_, value), _.identity));
 }
 
 function retract2(self, key){

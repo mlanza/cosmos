@@ -4,11 +4,11 @@ import * as w from "cosmos/work";
 import * as ont from "cosmos/ontology";
 
 function handle(self, event, next){
-  const key = _.getIn(event, ["args", 0]),
-        value = _.getIn(event, ["args", 1]),
+  const args = _.get(event, "args"),
+        f = _.apply(ont.retract, ?, args),
         id = _.get(event, "id");
 
-  _.swap(self.buffer, w.modify(?, _.isSome(value) ? ont.retract(?, key, value) : ont.retract(?, key), ...id));
+  _.swap(self.buffer, w.modify(?, f, ...id));
 
   next(event);
 }

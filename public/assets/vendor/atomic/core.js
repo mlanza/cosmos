@@ -804,6 +804,10 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     addMeta(target, keys("__marker__"), this);
 
     for (var method in behavior) {
+      if (!this[method]) {
+        throw new Error("Unknown behavior specified: " + method);
+      }
+
       addMeta(target, keys(method), behavior[method]);
     }
   }
