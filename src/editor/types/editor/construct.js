@@ -53,7 +53,7 @@ export function editor(repo, options){
       case "lasted":
         return t.last(_.first(args));
       case "dirtied":
-        return t.filter(_.comp(w.updated(buffer, ?), w.id));
+        return t.filter(_.comp(w.modified(buffer, ?), w.id));
       case "freshed":
         return t.filter(_.comp(w.created(buffer, ?), w.id));
       case "found":
