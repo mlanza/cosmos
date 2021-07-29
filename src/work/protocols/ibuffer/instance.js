@@ -6,8 +6,6 @@ export const IBuffer = _.protocol({
   update: null, //add new or modified entity to workspace
   destroy: null, //delete entity present in workspace
   transact: null, //update via transaction, potentially a protocol of its own
-  loaded: null, //was id loaded?
   change: null, //change to entity
-  changes: null, //changed entities
-  changed: null //was id changed?
+  changes: null //changed entities
 });

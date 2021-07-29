@@ -6,6 +6,4 @@ export const destroy = IBuffer.destroy;
 export const transact = IBuffer.transact;
 export const change = IBuffer.change;
 export const changes = IBuffer.changes;
-export const changed = IBuffer.changed;
-export const loaded = IBuffer.loaded;
 export const touched = IBuffer.touched;
