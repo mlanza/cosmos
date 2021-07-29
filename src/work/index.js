@@ -5,7 +5,7 @@ export * from "./protocols/concrete.js";
 export * from "./types.js";
 
 export function destroyed(self, id){
-  return _.contains(self, id) && _.get(self, id) == null;
+  return p.loaded(self, id) && !_.get(self, id);
 }
 
 export function created(self, id){
