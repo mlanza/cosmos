@@ -27,12 +27,12 @@ function transact(self, commands){
   return fmap(self, p.transact(?, commands));
 }
 
-function changes(self){
-  return p.changes(self.workspace);
+function change(self, id){
+  return p.change(self.workspace, id);
 }
 
-function changed(self, id){
-  return p.changed(self.workspace, id);
+function changes(self){
+  return p.changes(self.workspace);
 }
 
 function lookup(self, id){
@@ -47,10 +47,6 @@ function load(self, entities){
   return fmap(self, p.load(?, entities));
 }
 
-function loaded(self, id){
-  return p.loaded(self.workspace, id);
-}
-
 function repo(self){
   return self.repo;
 }
@@ -61,7 +57,7 @@ function fmap(self, f){
 
 export default _.does(
   _.forward("workspace", _.IReduce),
-  _.implement(IBuffer, {load, update, destroy, transact, loaded, changed, changes, repo}),
+  _.implement(IBuffer, {load, update, destroy, transact, changes, change, repo}),
   _.implement(_.IFunctor, {fmap}),
   _.implement(_.IAssociative, {contains}),
   _.implement(_.ILookup, {lookup}),

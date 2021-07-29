@@ -69,10 +69,14 @@ function destroy(self, ids){
   return transact(self, [c.destroy(ids)]);
 }
 
+function change(self, id){
+  const current = _.get(self, id),
+        prior = _.get(self.loaded, id);
+  return current === prior ? null : [current, prior];
+}
+
 function changes(self){
-  return self.changed |> _.keys |> _.map(function(id){
-    return [_.get(self.changed, id), _.get(self.loaded, id)];
-  }, ?);
+  return self.changed |> _.keys |> _.map(change(self, ?), ?) |> _.compact;
 }
 
 function changed(self, id){
@@ -154,7 +158,7 @@ function nth(self, idx){
 export default _.does(
   _.implement(IEntity, {id}),
   _.implement(IResolver, {resolve}), //TODO
-  _.implement(IBuffer, {load, update, destroy, transact, changes, loaded, changed, touched}),
+  _.implement(IBuffer, {load, update, destroy, transact, change, changes, loaded, changed, touched}),
   _.implement(repos.IQueryable, {query}),
   _.implement(_.IIndexed, {nth}),
   _.implement(_.ICounted, {count}),
