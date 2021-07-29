@@ -20,7 +20,7 @@ function assertions(self){
 
 function outs(self){ //TODO improve efficiency by using only relational keys
   return _.filter(function(assertion){
-    return _.is(assertion.object, _.GUID);
+    return _.is(_.get(assertion, "object"), _.UID);
   }, assertions(self));
 }
 
@@ -73,4 +73,3 @@ export default _.does(
   _.implement(_.ILookup, {lookup}),
   _.implement(_.IAssociative, {assoc, contains}),
   _.implement(ont.IStruct, {fld}));
-
