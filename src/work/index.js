@@ -9,7 +9,7 @@ export function created(self, id){
   return _.first(c) && !_.second(c);
 }
 
-export function updated(self, id){
+export function modified(self, id){
   const c = p.change(self, id);
   return _.first(c) && _.second(c);
 }
