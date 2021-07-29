@@ -75,6 +75,7 @@ export function editor(repo, options){
   _.doto(commandBus,
     mut.conj(_,
       sh.lockingMiddleware(commandBus),
+      ms.errorMiddleware(console.error.bind(console)),
       ms.keyedMiddleware("command-id", _.uid),
       ms.findMiddleware(effects, compile, buffer, entityDriven),
       ms.selectionMiddleware(selected, entityDriven),
