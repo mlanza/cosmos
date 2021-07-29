@@ -20,9 +20,7 @@ function handle(self, event, next){
       }) || memo;
     }, ol.title(added, title), _.keys(added));
 
-  _.swap(self.buffer, function(buffer){
-    return w.update(buffer, [entity]);
-  });
+  _.swap(self.buffer, w.update(?, entity));
 
   //TODO create middleware which clears selections after certain actions, remove `model`
   _.just(self.model, _.deref, _.get(_, "selected"), _.toArray, c.deselect, sh.dispatch(self.commandBus, _));

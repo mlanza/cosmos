@@ -15,12 +15,16 @@ function query(self, plan){
   return repos.query(self.repo, plan);
 }
 
-function update(self, entities){
-  return fmap(self, p.update(?, entities));
+function load(self, ...entities){
+  return fmap(self, p.load(?, ...entities));
 }
 
-function destroy(self, entities){
-  return fmap(self, p.destroy(?, entities));
+function update(self, ...entities){
+  return fmap(self, p.update(?, ...entities));
+}
+
+function destroy(self, ...ids){
+  return fmap(self, p.destroy(?, ...ids));
 }
 
 function transact(self, commands){
@@ -41,10 +45,6 @@ function lookup(self, id){
 
 function contains(self, id){
   return _.just(self.workspace, _.contains(_, id));
-}
-
-function load(self, entities){
-  return fmap(self, p.load(?, entities));
 }
 
 function repo(self){

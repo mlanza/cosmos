@@ -8,12 +8,7 @@ function handle(self, event, next){
         value = _.getIn(event, ["args", 1]),
         id = _.get(event, "id");
 
-  _.swap(self.buffer, function(buffer){
-    return w.update(buffer, _.mapa(function(id){
-      const entity = _.get(buffer, id);
-      return _.isSome(value) ? ont.retract(entity, key, value) : ont.retract(entity, key);
-    }, id));
-  });
+  _.swap(self.buffer, w.modify(?, _.isSome(value) ? ont.retract(?, key, value) : ont.retract(?, key), ...id));
 
   next(event);
 }

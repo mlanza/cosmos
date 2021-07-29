@@ -18,3 +18,7 @@ export function destroyed(self, id){
   const c = p.change(self, id);
   return !_.first(c) && _.second(c);
 }
+
+export function modify(self, f, ...ids){
+  return p.update(self, ..._.mapa(_.comp(f(?, self), _.get(self, ?)), ids));
+}

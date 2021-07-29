@@ -12,16 +12,16 @@ function query(self, plan){
   return repos.query(self.workspace, plan);
 }
 
-function load(self, entities){
-  return new self.constructor(self.indexes, p.load(self.workspace, entities));
+function load(self, ...entities){
+  return new self.constructor(self.indexes, p.load(self.workspace, ...entities));
 }
 
-function update(self, entities){
-  return new self.constructor(self.indexes, p.update(self.workspace, entities));
+function update(self, ...entities){
+  return new self.constructor(self.indexes, p.update(self.workspace, ...entities));
 }
 
-function destroy(self, entities){
-  return new self.constructor(self.indexes, p.destroy(self.workspace, entities));
+function destroy(self, ...ids){
+  return new self.constructor(self.indexes, p.destroy(self.workspace, ...ids));
 }
 
 function transact(self, commands){

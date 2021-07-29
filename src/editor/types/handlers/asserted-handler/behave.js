@@ -9,11 +9,7 @@ function handle(self, event, next){
         value = _.second(args),
         id = _.get(event, "id");
 
-  _.swap(self.buffer, function(buffer){
-    return w.update(buffer, _.mapa(function(id){
-      return ont.assert(_.get(buffer, id), key, value);
-    }, id));
-  });
+  _.swap(self.buffer, w.modify(?, ont.assert(?, key, value), ...id));
 
   next(event);
 }

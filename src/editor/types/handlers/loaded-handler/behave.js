@@ -4,7 +4,7 @@ import * as w from "cosmos/work";
 
 function handle(self, event, next){
   _.swap(self.buffer, function(buffer){
-    return w.load(buffer, _.get(event, "args"));
+    return w.load(buffer, ..._.get(event, "args"));
   });
   next(event);
 }
