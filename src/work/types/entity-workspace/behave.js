@@ -48,7 +48,7 @@ function transact(self, txn){
           _.reduce(_.conj, ids, args)
         ];
     }
-    return [loaded, _changed, ids];
+    return [loaded, changed, ids];
   }, [self.loaded, self.changed, []], txn);
   return entityWorkspace(args[0], args[1], imm.set(args[2]));
 }
@@ -63,11 +63,6 @@ function loaded(self, id){
 
 function update(self, entities){
   return transact(self, [c.update(entities)]);
-}
-
-export function updated(self, entity){
-  const id = p.id(entity);
-  return _.contains(self.loaded, id) && _.contains(self.changed, id);
 }
 
 function destroy(self, ids){
