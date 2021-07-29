@@ -12,6 +12,7 @@ export const save = c.save;
 export const cast = c.cast;
 export const toggle = c.toggle;
 export const tag = c.tag;
+export const untag = c.untag;
 export const assert = c.assert;
 export const retract = c.retract;
 export const select = c.select;

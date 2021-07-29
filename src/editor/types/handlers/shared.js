@@ -4,10 +4,13 @@ import * as sh from "atomic/shell";
 export function existing(event){
   return function handle(self, command, next){
     const e = Object.assign(event(), command, {type: event().type});
-    //const id = _.get(command, "id");
-    //if (_.apply(_.everyPred, _.contains(self.buffer, _), id)) {
+    const id = _.get(command, "id");
+    const f = _.everyPred(_.contains(_.deref(self.buffer), ?));
+    if (_.apply(f, id)) {
       sh.raise(self.provider, e);
-    //}
+    } else {
+      throw new Error("Targeted unknown entities.");
+    }
     next(command);
   }
 }

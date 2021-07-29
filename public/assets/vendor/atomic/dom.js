@@ -1253,7 +1253,7 @@ define(['exports', 'atomic/core', 'atomic/reactives', 'atomic/transients', 'dom'
     return deref(self).length;
   }
 
-  var behave$1 = _.does(_.implement(_.ISequential), _.implement(_.ISeq, {
+  var behave$1 = _.does(_.implement(_.ISequential), _.implement(_.ISeqable, {
     seq: seq
   }), _.implement(_.IDeref, {
     deref: deref

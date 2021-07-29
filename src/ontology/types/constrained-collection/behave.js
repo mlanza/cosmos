@@ -22,6 +22,10 @@ function conj(self, value){
   return new self.constructor(self.constraints, _.conj(self.coll, value));
 }
 
+function unconj(self, value){
+  return new self.constructor(self.constraints, _.unconj(self.coll, value));
+}
+
 function equiv(self, other){
   return self === other; //TODO self.constructor === other.constructor && _.every()
 }
@@ -67,5 +71,5 @@ export default _.does(
   _.implement(_.IReduce, {reduce}),
   _.implement(_.IKVReduce, {reducekv}),
   _.implement(_.IEquiv, {equiv}),
-  _.implement(_.ICollection, {conj}),
+  _.implement(_.ICollection, {conj, unconj}),
   _.implement(_.ISeqable, {seq}));

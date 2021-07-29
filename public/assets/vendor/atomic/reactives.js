@@ -478,7 +478,7 @@ define(['exports', 'atomic/core', 'atomic/transducers', 'symbol', 'promise', 'at
     return journal2(Infinity, cell);
   }
 
-  var journal = _.overload(null, journal1, journal2);
+  var journal = _.called(_.overload(null, journal1, journal2), "`journal` is deprecated — use persistent `journal` from `core` and a `cell`.");
 
   function deref(self) {
     return _.deref(self.cell);
