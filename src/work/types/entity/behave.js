@@ -55,13 +55,18 @@ function constraints(self){
 }
 
 function serialize(self){
-  return self.attrs;
+  return self.attrs; //entities keep attributes which can be readily serialized to json
+}
+
+function hash(self){
+  return imm.hash(self.attrs);
 }
 
 export default _.does(
   _.implement(IEntity, {id}),
   _.implement(ISerializable, {serialize}),
   _.implement(IVertex, {outs}),
+  _.implement(imm.IHash, {hash}),
   _.implement(vd.IConstrainable, {constraints}),
   _.implement(_.IMap, {keys, dissoc}),
   _.implement(_.ILookup, {lookup}),
