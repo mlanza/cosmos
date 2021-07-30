@@ -76,7 +76,6 @@ export function editor(repo, options){
     mut.conj(_,
       sh.lockingMiddleware(commandBus),
       ms.errorMiddleware(console.error.bind(console)),
-      ms.keyedMiddleware("command-id", _.uid),
       ms.findMiddleware(effects, compile, buffer, entityDriven),
       ms.selectionMiddleware(selected, entityDriven),
       sh.teeMiddleware(_.see("command")),
@@ -109,7 +108,6 @@ export function editor(repo, options){
 
   _.doto(eventBus,
     mut.conj(_,
-      ms.keyedMiddleware("event-id", _.uid),
       sh.teeMiddleware(_.see("event")),
       _.doto(sh.handlerMiddleware(),
         mut.assoc(_, "peeked", ed.peekedHandler(buffer, selected, _.does(_.reset(peeked, ?), _.see("peeked")))),
