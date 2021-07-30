@@ -42,9 +42,7 @@ function transact(self, txn){
       case "destroy":
         return [
           loaded,
-          _.reduce(function(memo, id){
-            return _.assoc(memo, id, null);
-          }, changed, args),
+          _.reduce(_.assoc(?, id, null), changed, args),
           _.reduce(_.conj, ids, args)
         ];
     }
@@ -134,7 +132,7 @@ function id(self){
 function resolve(self, refs){
   return _.mapa(function(ref){
     return _.detect(function(entity){
-      return entity.attrs.Id === ref.value; //TODO inefficient non-indexed access, demeter!
+      return entity.attrs.id === ref.value; //TODO inefficient non-indexed access, demeter!
     }, self);
   }, refs);
 }

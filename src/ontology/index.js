@@ -30,8 +30,8 @@ function retract2(self, key){
 export const retract = _.overload(null, null, retract2, retract3, _.reducing(retract3));
 
 function asserts3(self, key, value){
-  return _.seq(_.filter(function(assertion){
-    return _.equiv(value, _.nth(assertion, 1));
+  return _.seq(_.filter(function(edge){
+    return _.equiv(value, _.nth(edge, 1));
   }, asserts2(self, key)));
 }
 

@@ -1,18 +1,18 @@
 import * as _ from "atomic/core";
-import {assertionStore} from "./construct.js";
+import {edgeStore} from "./construct.js";
 
 function reviseStore(manner){
   return function(self, assertion){
-    return assertionStore(self.questions, _.reduce(function(memo, question){
+    return edgeStore(self.questions, _.reduce(function(memo, question){
       return _.update(memo, question, function(answers){
-        return manner(answers || imm.set(), assertion);
+        return manner(answers || imm.set(), edge);
       });
-    }, self.assertions, self.questions(assertion)));
+    }, self.edges, self.questions(edge)));
   }
 }
 
-function lookup(self, assertion){
-  return _.seq(_.get(self.assertions, assertion));
+function lookup(self, edge){
+  return _.seq(_.get(self.edges, edge));
 }
 
 const conj = reviseStore(_.conj);

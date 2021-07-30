@@ -1,5 +1,5 @@
 import * as _ from "atomic/core";
-import {assertionStore} from "../assertion-store/construct.js";
+import {edgeStore} from "../edge-store/construct.js";
 import {entityWorkspace} from "../entity-workspace/construct.js";
 
 export function IndexedEntityWorkspace(indexes, workspace){
@@ -7,4 +7,4 @@ export function IndexedEntityWorkspace(indexes, workspace){
   this.workspace = workspace;
 }
 
-export const indexedEntityWorkspace = _.fnil(_.constructs(IndexedEntityWorkspace), assertionStore(), entityWorkspace());
+export const indexedEntityWorkspace = _.fnil(_.constructs(IndexedEntityWorkspace), edgeStore(), entityWorkspace());

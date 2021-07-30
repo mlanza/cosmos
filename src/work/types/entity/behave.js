@@ -2,26 +2,20 @@ import * as _ from "atomic/core";
 import * as vd from "atomic/validates";
 import * as imm from "atomic/immutables";
 import * as ont from "cosmos/ontology";
-import {assertion} from "../assertion/construct.js";
+import {edge} from "../edge/construct.js";
 import {IEntity} from "../../protocols/ientity/instance.js";
 import {IVertex} from "../../protocols/ivertex/instance.js";
 import {ISerializable} from "../../protocols/iserializable/instance.js";
 import * as p from "../../protocols/concrete.js";
 
-function assertions(self){
+function outs(self){
   const id = p.id(self);
   return _.mapcat(function(key){
     const field = ont.fld(self, key);
     return _.get(field, "computed") ? [] : _.map(function(value){
-      return assertion(id, key, value);
+      return edge(id, key, value);
     }, _.get(self, key));
   }, _.filter(_.notEq(_, "id"), _.keys(self))); //TODO identify pk with metadata
-}
-
-function outs(self){ //TODO improve efficiency by using only relational keys
-  return _.filter(function(assertion){
-    return _.is(_.get(assertion, "object"), _.UID);
-  }, assertions(self));
 }
 
 function id(self){
@@ -65,7 +59,7 @@ function serialize(self){
 }
 
 export default _.does(
-  _.implement(IEntity, {id, assertions}),
+  _.implement(IEntity, {id}),
   _.implement(ISerializable, {serialize}),
   _.implement(IVertex, {outs}),
   _.implement(vd.IConstrainable, {constraints}),
