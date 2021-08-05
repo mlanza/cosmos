@@ -47,5 +47,9 @@ function asserts1(self){
 
 export const asserts = _.overload(null, asserts1, asserts2, asserts3);
 export const unlimited = T.constrainedCollection(vd.and(vd.unlimited));
-export const entities  = vd.constrain(unlimited, vd.collOf(vd.isa(_.GUID)));
-export const entity    = vd.constrain(T.required, vd.collOf(vd.isa(_.GUID)));
+export function entities(ID){
+  return vd.constrain(unlimited, vd.collOf(vd.isa(ID)));
+}
+export function entity(ID){
+  return vd.constrain(T.required, vd.collOf(vd.isa(ID)));
+}
