@@ -157,7 +157,8 @@ define('cmd/imports', function(){
     "repos": "atomic/repos",
     "ont": "cosmos/ontology",
     "w": "cosmos/work",
-    "ol": "cosmos/outlines"
+    "ol": "cosmos/outlines",
+    "ed": "cosmos/editor"
   }
 });
 define('cmd', ["atomic/core", "cmd/imports", "promise"], function(_, defaults, Promise){

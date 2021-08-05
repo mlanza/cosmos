@@ -8,12 +8,12 @@ export * from "./types.js";
 import {Outline, Note} from "./types.js";
 
 export const defaults = _.conj(ont.struct(),
-  _.assoc(ont.field("id", ont.entity, function(coll){
+  _.assoc(ont.field("id", ont.entity(_.UID), function(coll){
     return ont.recaster(_.uid, _.str, ont.valueCaster(coll)); //TODO uid might be an option
   }), "label", "ID"),
   _.assoc(ont.field("title", ont.required), "label", "Title"),
   _.assoc(ont.field("text", ont.optional), "label", "Text"),
-  _.assoc(ont.field("child", ont.resolvingCollection(vd.and(vd.unlimited, vd.collOf(vd.isa(Outline, Note))), ont.entities), function(coll){
+  _.assoc(ont.field("child", ont.resolvingCollection(vd.and(vd.unlimited, vd.collOf(vd.isa(Outline, Note))), ont.entities(_.UID)), function(coll){
     return ont.recaster(_.uid, _.identity, ont.valuesCaster(coll));
   }), "label", "Child"),
   _.assoc(ont.field("tag", ont.unlimited, ont.valuesCaster), "label", "Tag", "appendonly", true),
@@ -57,7 +57,11 @@ export const outline =
       }), "label", "Due Date"),
       _.assoc(ont.computedField("overdue", [isOverdue]), "label", "Overdue"),
       _.assoc(ont.computedField("flags", [typed, flag("overdue", isOverdue), flag("important", isImportant)]), "label", "Flags"),
-      _.assoc(ont.field("assignee", ont.entities), "label", "Assignee"),
+      _.assoc(ont.field("assignee", ont.entities(_.UID)), "label", "Assignee"),
       _.assoc(ont.field("expanded", vd.constrain(ont.required, vd.collOf(_.isBoolean))), "label", "Expanded")));
 
 export const outlines = _.conj(ont.ontology(), outline, note);
+
+export const lib = _.conj(ont.librarian(),
+  ont.objectively(_.signature(null, null, _.is(_, _.UID))), //backlinks
+  ont.typed(_.includes(["$type", "priority", "tag"], ?)));
