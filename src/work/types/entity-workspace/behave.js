@@ -77,22 +77,6 @@ function includes(self, entity){
   return _.contains(self, p.id(entity));
 }
 
-function first(self){
-  return _.first(vals(self));
-}
-
-function rest(self){
-  return _.rest(vals(self));
-}
-
-function next(self){
-  return _.seq(rest(self));
-}
-
-function seq(self){
-  return _.seq(_.keys(self)) ? self : null;
-}
-
 function lookup(self, id){
   return _.contains(self.changed, id) ? _.get(self.changed, id) : _.get(self.loaded, id);
 }
@@ -109,12 +93,12 @@ function dissoc(self, id){
 }
 
 function keys(self){
-  return _.filter(_.get(self, _),
-    imm.distinct(_.concat(Array.from(_.keys(self.loaded)), Array.from(_.keys(self.changed)))));
+  return _.filter(_.get(self, _), imm.distinct(_.concat(_.keys(self.loaded), _.keys(self.changed))));
 }
 
 function vals(self){
-  return _.map(_.get(self, _), _.keys(self));
+  const keys = _.keys(self);
+  return _.seq(keys) ? _.map(_.get(self, ?), keys) : null;
 }
 
 function count(self){
@@ -156,8 +140,6 @@ export default _.does(
   _.implement(_.IMap, {keys, vals, dissoc}),
   _.implement(_.IReduce, {reduce}),
   _.implement(_.ILookup, {lookup}),
-  _.implement(_.ISeq, {first, rest}),
-  _.implement(_.INext, {next}),
-  _.implement(_.ISeqable, {seq}),
+  _.implement(_.ISeqable, {seq: vals}),
   _.implement(_.IInclusive, {includes}),
   _.implement(_.IEmptyableCollection, {empty}));
