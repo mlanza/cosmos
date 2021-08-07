@@ -19,16 +19,12 @@ function diff(current, former){
   return [added, removed];
 }
 
-function indices(librarian, changes){
-  return _.map(function(x){
-    return _.count(x) ? _.apply(ont.indices, librarian, x) : [];
-  }, changes);
-}
-
 function revisions(current, former, librarian, ids){
   return _.map(function(id){
     return diff(_.get(current, id), _.get(former, id))
-      |> indices(librarian, ?)
+      |> _.map(function(edges){
+          return _.count(edges) ? _.apply(ont.indices, librarian, edges) : [];
+        }, ?)
       |> _.cons(id, ?)
       |> _.toArray //allow destructuring
   }, ids);

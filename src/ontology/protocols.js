@@ -2,4 +2,4 @@ export * from "./protocols/icaster/instance.js";
 export * from "./protocols/ifield/instance.js";
 export * from "./protocols/istruct/instance.js";
 export * from "./protocols/imaker/instance.js";
-export * from "./protocols/isearchable/instance.js";
+export * from "./protocols/icatalogue/instance.js";
