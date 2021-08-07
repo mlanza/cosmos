@@ -22,9 +22,9 @@ export function Editor(repo, buffer, model, commandBus, eventBus, emitter, peeke
   this.options = options;
 }
 
-export function editor(repo, options){
+export function editor(lib, repo, options){
   const $state = $.cell(_.journal({
-          buffer: w.buffer(repo),
+          buffer: w.buffer(repo, w.indexedEntityWorkspace(lib)),
           effects: [],
           root: options.root, //identify the root entities from where rendering begins
           selected: _.into(imm.set(), options.selected || []), //track which entities are selected

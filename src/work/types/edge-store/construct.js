@@ -6,7 +6,7 @@ export function EdgeStore(questions, edges){
   this.edges = edges;
 }
 
-export const edgeStore = _.fnil(_.constructs(EdgeStore), _.array, imm.map());
+export const edgeStore = _.fnil(_.constructs(EdgeStore), [], imm.map());
 
 export function questions(edge){
   return [
