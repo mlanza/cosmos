@@ -1,6 +1,7 @@
 import * as _ from "atomic/core";
 import * as ont from "cosmos/ontology";
 import * as p from "./protocols/concrete.js";
+import {IVertex} from "./protocols/ivertex/instance.js";
 export * from "./protocols.js";
 export * from "./protocols/concrete.js";
 export * from "./types.js";
@@ -23,3 +24,5 @@ export function destroyed(self, id){
 export function modify(self, f, ...ids){
   return p.update(self, ..._.mapa(_.comp(f, _.get(self, ?)), ids));
 }
+
+_.doto(_.Nil, _.implement(IVertex, {outs: _.constantly([])}));

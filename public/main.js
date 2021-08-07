@@ -7,6 +7,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
   //TODO #FUTURE Optimize like effects (destruction, modification, addition) into aggregate effects before applying them.
 
   var editor = ed.editor(
+    ol.lib,
     re.jsonRepo(
       "../data/outline.json",
       ol.outlines),

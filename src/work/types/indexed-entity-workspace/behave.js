@@ -1,35 +1,88 @@
 import * as _ from "atomic/core";
+import * as imm from "atomic/immutables";
 import * as repos from "atomic/repos";
+import * as ont from "cosmos/ontology";
 import * as p from "../../protocols/concrete.js";
 import {IEntity} from "../../protocols/ientity/instance.js";
 import {IResolver} from "../../protocols/iresolver/instance.js";
 import {IBuffer} from "../../protocols/ibuffer/instance.js";
 import {buffer as empty} from "../buffer/construct.js";
 
-// TODO implement indexing
+//TODO utilize indices for finding - indices may be approximations so results must still be filtered
+//TODO provide backlinks (`ins`) on entities
 
-function query(self, plan){
-  return repos.query(self.workspace, plan);
+function diff(current, former){
+  const c = imm.set(p.outs(current)),
+        f = imm.set(p.outs(former)),
+        added = _.difference(c, f),
+        removed = _.difference(f, c);
+  return [added, removed];
+}
+
+function indices(librarian, changes){
+  return _.map(function(x){
+    return _.count(x) ? _.apply(ont.indices, librarian, x) : [];
+  }, changes);
+}
+
+function revisions(current, former, librarian, ids){
+  return _.map(function(id){
+    return diff(_.get(current, id), _.get(former, id))
+      |> indices(librarian, ?)
+      |> _.cons(id, ?)
+      |> _.toArray //allow destructuring
+  }, ids);
+}
+
+const reindex = _.reduce(function(memo, [id, added, removed]){
+  return _.just(memo,
+    _.reduce(function(memo, index){
+      const entities = _.maybe(memo, _.get(?, index), _.conj(_, id)) || imm.set([id]);
+      return _.assoc(memo, index, entities);
+    }, ?, added),
+    _.reduce(function(memo, index){
+      const entities = _.just(memo, _.get(?, index), _.disj(_, id));
+      if (_.count(entities)) {
+        return _.assoc(memo, index, entities);
+      } else {
+        return _.dissoc(memo, index);
+      }
+    }, ?, removed));
+}, ?, ?);
+
+function reindexing(current, former, librarian, indexes){
+  return current
+    |> p.touched
+    |> revisions(current, former, librarian, ?)
+    |> reindex(indexes, ?);
 }
 
 function load(self, ...entities){
-  return new self.constructor(self.indexes, p.load(self.workspace, ...entities));
+  const current = p.load(self.workspace, ...entities);
+  return new self.constructor(self.librarian, reindexing(current, self.workspace, self.librarian, self.indexes), current);
 }
 
 function update(self, ...entities){
-  return new self.constructor(self.indexes, p.update(self.workspace, ...entities));
+  const current = p.update(self.workspace, ...entities);
+  return new self.constructor(self.librarian, reindexing(current, self.workspace, self.librarian, self.indexes), current);
 }
 
 function destroy(self, ...ids){
-  return new self.constructor(self.indexes, p.destroy(self.workspace, ...ids));
+  const current = p.destroy(self.workspace, ...ids);
+  return new self.constructor(self.librarian, reindexing(current, self.workspace, self.librarian, self.indexes), current);
 }
 
 function transact(self, commands){
-  return new self.constructor(self.indexes, p.transact(self.workspace, commands));
+  const current = p.transact(self.workspace, commands);
+  return new self.constructor(self.librarian, reindexing(current, self.workspace, self.librarian, self.indexes), current);
 }
 
-function dissoc(self, id){
-  return new self.constructor(self.indexes, _.dissoc(self.workspace, id));
+function dissoc(self, id){ //TODO
+  return new self.constructor(self.librarian, self.indexes, _.dissoc(self.workspace, id));
+}
+
+function query(self, plan){
+  return repos.query(self.workspace, plan);
 }
 
 export default _.does(
