@@ -57,24 +57,25 @@ function reindexing(current, former, librarian, indexes){
     |> reindex(indexes, ?);
 }
 
-function load(self, ...entities){
-  const current = p.load(self.workspace, ...entities);
+function fmap(self, f){
+  const current = f(self.workspace);
   return new self.constructor(self.librarian, reindexing(current, self.workspace, self.librarian, self.indexes), current);
+}
+
+function load(self, ...entities){
+  return fmap(self, p.load(?, ...entities));
 }
 
 function update(self, ...entities){
-  const current = p.update(self.workspace, ...entities);
-  return new self.constructor(self.librarian, reindexing(current, self.workspace, self.librarian, self.indexes), current);
+  return fmap(self, p.update(?, ...entities));
 }
 
 function destroy(self, ...ids){
-  const current = p.destroy(self.workspace, ...ids);
-  return new self.constructor(self.librarian, reindexing(current, self.workspace, self.librarian, self.indexes), current);
+  return fmap(self, p.destroy(?, ...ids));
 }
 
 function transact(self, commands){
-  const current = p.transact(self.workspace, commands);
-  return new self.constructor(self.librarian, reindexing(current, self.workspace, self.librarian, self.indexes), current);
+  return fmap(self, p.transact(?, commands));
 }
 
 function dissoc(self, id){ //TODO
@@ -86,9 +87,10 @@ function query(self, plan){
 }
 
 export default _.does(
-  _.forward("workspace", _.IMap, _.ISeq, _.INext, _.ISeqable, _.ILookup, _.IReduce, _.ICounted, _.IInclusive, _.IAssociative, _.IIndexed, IEntity, IResolver),
+  _.forward("workspace", _.IMap, _.ISeqable, _.ILookup, _.IReduce, _.ICounted, _.IInclusive, _.IAssociative, _.IIndexed, IEntity, IResolver),
   _.implement(repos.IQueryable, {query}),
   _.implement(IBuffer, {load, update, destroy, transact}),
+  _.implement(_.IFunctor, {fmap}),
   _.implement(_.IMap, {dissoc}),
   _.implement(_.IEmptyableCollection, {empty}));
 
