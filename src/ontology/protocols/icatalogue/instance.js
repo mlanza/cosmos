@@ -1,4 +1,4 @@
 import * as _ from "atomic/core";
-export const ISearchable = _.protocol({
+export const ICatalogue = _.protocol({
   indices: null
 });

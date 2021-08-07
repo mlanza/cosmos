@@ -1,7 +1,7 @@
 import * as _ from "atomic/core";
-import {ISearchable} from "./instance.js";
+import {ICatalogue} from "./instance.js";
 
-const indices2 = ISearchable.indices;
+const indices2 = ICatalogue.indices;
 function indicesN(self, ...triples){
   return _.mapcat(indices2(self, ?), triples);
 }
