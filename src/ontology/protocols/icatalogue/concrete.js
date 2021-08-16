@@ -7,3 +7,4 @@ function indicesN(self, ...triples){
 }
 
 export const indices = _.overload(null, null, indices2, indicesN);
+export const search = ICatalogue.search;
