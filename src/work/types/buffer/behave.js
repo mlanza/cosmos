@@ -56,7 +56,7 @@ function fmap(self, f){
 }
 
 export default _.does(
-  _.forward("workspace", _.IReduce),
+  _.forward("workspace", _.IReduce, ont.ICatalogue),
   _.implement(IBuffer, {load, update, destroy, transact, changes, change, repo}),
   _.implement(_.IFunctor, {fmap}),
   _.implement(_.IAssociative, {contains}),
