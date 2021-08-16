@@ -2653,7 +2653,9 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
     }, next$a(coll)));
     return cons(run, partitionBy(f, seq$a(drop(count$d(run), coll))));
   }
-  function last(coll) {
+
+
+  function last1(coll) {
     var xs = coll,
         ys = null;
 
@@ -2663,6 +2665,21 @@ define(['exports', 'symbol', 'promise', 'weak-map', 'set'], function (exports, _
 
     return first$d(xs);
   }
+
+  function last2(n, coll){
+    var xs = coll, ys = new Array(n);
+
+    while (seq$a(xs)) {
+      ys.push(first$d(xs));
+      ys.shift();
+      xs = next$a(xs);
+    }
+
+    return ys;
+
+  }
+
+  var last = overload(null, last1, last2);
 
   function dedupe1(coll) {
     return dedupe2(identity, coll);

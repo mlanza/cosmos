@@ -5,6 +5,7 @@ import * as t from "atomic/transducers";
 import * as mut from "atomic/transients";
 import * as imm from "atomic/immutables";
 import * as w from "cosmos/work";
+import * as ont from "cosmos/ontology";
 import * as ms from "../../types/middlewares.js";
 import * as ed from "../../types/handlers.js";
 import {cursor} from "../../types/cursor/construct.js";
@@ -42,41 +43,42 @@ export function editor(lib, repo, options){
 
   const entityDriven = _.comp(_.includes(["assert", "retract", "toggle", "destroy", "cast", "tag", "untag", "select", "deselect"], _), _.identifier);
 
-  function compile(self, event){
-    const args = _.get(event, "args"),
-          buffer = _.deref(self.buffer);
-    switch (event.type) { //TODO install via map?
-      case "took":
-        return t.take(_.first(args));
-      case "skipped":
-        return t.drop(_.first(args));
-      case "lasted":
-        return t.last(_.first(args));
-      case "dirtied":
-        return t.filter(_.comp(w.modified(buffer, ?), w.id));
-      case "freshed":
-        return t.filter(_.comp(w.created(buffer, ?), w.id));
-      case "found":
-        switch (_.count(args)) {
-          case 1:
-            const type = _.first(args);
-            return t.filter(function(entity){
-              return _.first(_.get(entity, "$type")) == type;
-            });
-          case 2:
-            const key = _.first(args), value = _.second(args);
-            return t.filter(function(entity){
-              return _.includes(_.get(entity, key), value);
-            });
-        }
-    }
+  function search(self, events){
+    const buffer = _.deref(self.buffer);
+    const criteria = _.just(events, _.takeWhile(function(event){
+      return event.type == "found";
+    }, ?), _.mapa(function(event){
+      const args = _.get(event, "args");
+      return _.count(args) == 1 ? ont.criterion(null, "$type", _.first(args)) : ont.criterion(null, _.first(args), _.second(args));
+    }, ?));
+    return _.reduce(function(memo, event){
+      const args = _.get(event, "args");
+      switch (event.type) { //TODO install via map?
+        case "took":
+          return _.take(_.first(args), memo);
+        case "skipped":
+          return _.drop(_.first(args), memo);
+        case "lasted":
+          return _.last(_.first(args), memo);
+        case "dirtied":
+          return _.filter(_.comp(w.modified(buffer, ?), w.id), memo);
+        case "freshed":
+          return _.filter(_.comp(w.created(buffer, ?), w.id), memo);
+        case "found":
+          return _.filter(w.meets(?, [_.count(args) == 1 ? ont.criterion(null, "$type", _.first(args)) : ont.criterion(null, _.first(args), _.second(args))]), memo);
+        default:
+          return memo;
+      }
+    }, ont.search(buffer, criteria), _.dropWhile(function(event){
+      return event.type == "found";
+    }, events));
   }
 
   _.doto(commandBus,
     mut.conj(_,
       sh.lockingMiddleware(commandBus),
       ms.errorMiddleware(console.error.bind(console)),
-      ms.findMiddleware(effects, compile, buffer, entityDriven),
+      ms.findMiddleware(effects, search, buffer, entityDriven),
       ms.selectionMiddleware(selected, entityDriven),
       sh.teeMiddleware(_.see("command")),
       _.doto(sh.handlerMiddleware(),

@@ -14,11 +14,9 @@ function handle(self, message, next){
   if (!_.contains(message, "id") && self.pred(message)) {
     const effects = _.deref(self.effects);
     if (_.seq(effects)) {
-      const buffer = _.deref(self.buffer),
-            f = _.apply(_.comp, _.mapa(_.partial(self.compile, self), effects)),
-            id = _.into([], _.comp(f, t.map(_.get(_, "id")), t.map(_.first)), buffer),
-            select = _.assoc(message, "id", id);
-      next(select);
+      const entities = self.find(self, effects),
+            id = _.into([], _.comp(t.map(_.get(_, "id")), t.map(_.first)), entities);
+      next(_.assoc(message, "id", id));
       return;
     }
   }
@@ -27,4 +25,3 @@ function handle(self, message, next){
 
 export default _.does(
   _.implement(sh.IMiddleware, {handle}));
-
