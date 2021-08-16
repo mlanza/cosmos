@@ -22,6 +22,17 @@ function id(self){
   return _.uid(self.attrs.id);
 }
 
+function meets(self, criterion){
+  const subject = _.get(criterion, "subject"),
+        predicate = _.get(criterion, "predicate"),
+        object = _.get(criterion, "object"),
+        values = _.get(self, predicate);
+  return (subject == null || _.includes(_.get(self, "id"), subject)) && (
+    (predicate != null && object != null && _.includes(values, object)) ||
+    (predicate != null && object == null && _.contains(self, predicate)) ||
+    (predicate == null && object != null && _.detect(_.eq(object, ?), vals(self))));
+}
+
 function fld(self, key){
   return ont.fld(self.topic, key) || _.assoc(_.isArray(_.get(self.attrs, key))
     ? ont.field(key, ont.unlimited, ont.valuesCaster)
@@ -36,9 +47,15 @@ function assoc(self, key, values){
   return ont.aset(fld(self, key), self, values);
 }
 
-function contains(self, key){
+function contains2(self, key){
   return _.contains(self.attrs, key);
 }
+
+function contains3(self, key, value){
+  return _.includes(_.get(self.attrs, key), value);
+}
+
+const contains = _.overload(null, null, contains2, contains3);
 
 function dissoc(self, key){
   return assoc(self, key, null); //TODO test
@@ -46,6 +63,10 @@ function dissoc(self, key){
 
 function keys(self){
   return imm.distinct(_.concat(_.keys(self.topic), _.keys(self.attrs)));
+}
+
+function vals(self){
+  return _.mapcat(_.get(self, ?), keys(self));
 }
 
 function constraints(self){
@@ -63,12 +84,12 @@ function hash(self){
 }
 
 export default _.does(
-  _.implement(IEntity, {id}),
+  _.implement(IEntity, {id, meets}),
   _.implement(ISerializable, {serialize}),
   _.implement(IVertex, {outs}),
   _.implement(imm.IHash, {hash}),
   _.implement(vd.IConstrainable, {constraints}),
-  _.implement(_.IMap, {keys, dissoc}),
+  _.implement(_.IMap, {keys, vals, dissoc}),
   _.implement(_.ILookup, {lookup}),
   _.implement(_.IAssociative, {assoc, contains}),
   _.implement(ont.IStruct, {fld}));

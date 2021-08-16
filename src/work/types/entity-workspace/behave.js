@@ -1,6 +1,7 @@
 import * as _ from "atomic/core";
 import * as imm from "atomic/immutables";
 import * as repos from "atomic/repos";
+import * as ont from "cosmos/ontology";
 import * as p from "../../protocols/concrete.js";
 import {entityWorkspace, c} from "./construct.js";
 import {IEntity} from "../../protocols/ientity/instance.js";
@@ -12,6 +13,10 @@ function query(self, plan){
   return _.filter(function(entity){
     return _.matches(entity.attrs, plan); //TODO temporary
   }, _.seq(self));
+}
+
+function search(self, criteria){
+  return _.filter(w.meets(?, criteria), _.seq(self));
 }
 
 function transact(self, txn){
@@ -134,6 +139,7 @@ export default _.does(
   _.implement(IResolver, {resolve}), //TODO
   _.implement(IBuffer, {load, update, destroy, transact, change, changes, touched}),
   _.implement(repos.IQueryable, {query}),
+  _.implement(ont.ICatalogue, {search}),
   _.implement(_.IIndexed, {nth}),
   _.implement(_.ICounted, {count}),
   _.implement(_.IAssociative, {contains}),
