@@ -16,7 +16,11 @@ function query(self, plan){
 }
 
 function search(self, criteria){
-  return _.filter(w.meets(?, criteria), _.seq(self));
+  return _.filter(function(entity){
+    return _.reduce(function(memo, criterion){
+      return memo && w.meets(entity, criterion);
+    }, true, criteria);
+  }, _.seq(self));
 }
 
 function transact(self, txn){

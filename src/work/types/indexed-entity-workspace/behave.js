@@ -11,6 +11,25 @@ import {buffer as empty} from "../buffer/construct.js";
 //TODO utilize indices for finding - indices may be approximations so results must still be filtered
 //TODO provide backlinks (`ins`) on entities
 
+function search(self, criteria){
+  const sets = _.just(criteria, _.mapcat(function(criterion){
+    return ont.indices(self.librarian, criterion);
+  }, ?), _.mapa(function(criterion){
+    return _.get(self.indexes, criterion);
+  }, ?));
+  const init = _.first(sets),
+        rest = _.rest(sets),
+        ids = _.reduce(_.intersection, init, rest);
+  if (_.count(ids)) {
+    _.log("index hits", criteria, ids);
+    return _.filter(function(entity){
+      return w.meets(entity, ...criteria);
+    }, _.map(_.get(self, ?), ids));
+  } else {
+    return ont.search(self.workspace, criteria);
+  }
+}
+
 function diff(current, former){
   const c = imm.set(p.outs(current)),
         f = imm.set(p.outs(former)),
@@ -85,6 +104,7 @@ function query(self, plan){
 export default _.does(
   _.forward("workspace", _.IMap, _.ISeqable, _.ILookup, _.IReduce, _.ICounted, _.IInclusive, _.IAssociative, _.IIndexed, IEntity, IResolver),
   _.implement(repos.IQueryable, {query}),
+  _.implement(ont.ICatalogue, {search}),
   _.implement(IBuffer, {load, update, destroy, transact}),
   _.implement(_.IFunctor, {fmap}),
   _.implement(_.IMap, {dissoc}),

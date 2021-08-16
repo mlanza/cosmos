@@ -22,15 +22,17 @@ function id(self){
   return _.uid(self.attrs.id);
 }
 
-function meets(self, criterion){
-  const subject = _.get(criterion, "subject"),
-        predicate = _.get(criterion, "predicate"),
-        object = _.get(criterion, "object"),
-        values = _.get(self, predicate);
-  return (subject == null || _.includes(_.get(self, "id"), subject)) && (
-    (predicate != null && object != null && _.includes(values, object)) ||
-    (predicate != null && object == null && _.contains(self, predicate)) ||
-    (predicate == null && object != null && _.detect(_.eq(object, ?), vals(self))));
+function meets(self, ...criteria){
+  return _.reduce(function(memo, criterion){
+    const subject = _.get(criterion, "subject"),
+          predicate = _.get(criterion, "predicate"),
+          object = _.get(criterion, "object"),
+          values = _.get(self, predicate);
+      return memo && (subject == null || _.includes(_.get(self, "id"), subject)) && (
+        (predicate != null && object != null && _.includes(values, object)) ||
+        (predicate != null && object == null && _.contains(self, predicate)) ||
+        (predicate == null && object != null && _.detect(_.eq(object, ?), vals(self))));
+  }, true, criteria);
 }
 
 function fld(self, key){
