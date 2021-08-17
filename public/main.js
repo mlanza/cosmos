@@ -41,6 +41,8 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
 
   sh.dispatch(editor, c.query());
 
+  $.sub(editor.buffer, t.map(_.get(_, _.uid("6slexy"))), t.dedupe(), _.see("#6slexy"));
+
   return editor;
 
 });
