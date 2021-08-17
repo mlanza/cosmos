@@ -3,9 +3,9 @@ import * as imm from "atomic/immutables";
 import * as repos from "atomic/repos";
 import * as ont from "cosmos/ontology";
 import * as p from "../../protocols/concrete.js";
-import {IEntity} from "../../protocols/ientity/instance.js";
 import {IResolver} from "../../protocols/iresolver/instance.js";
 import {IBuffer} from "../../protocols/ibuffer/instance.js";
+import {Backlinked, backlinked} from "../backlinked/construct.js";
 import {buffer as empty} from "../buffer/construct.js";
 
 //TODO utilize indices for finding - indices may be approximations so results must still be filtered
@@ -23,7 +23,7 @@ function search(self, criteria){
   if (_.count(ids)) {
     _.log("index hits", criteria, ids);
     return _.filter(function(entity){
-      return w.meets(entity, ...criteria);
+      return ont.meets(entity, ...criteria);
     }, _.map(_.get(self, ?), ids));
   } else {
     return ont.search(self.workspace, criteria);
@@ -82,7 +82,7 @@ function load(self, ...entities){
 }
 
 function update(self, ...entities){
-  return fmap(self, p.update(?, ...entities));
+  return fmap(self, p.update(?, ..._.mapa(_.deref, entities)));
 }
 
 function destroy(self, ...ids){
@@ -101,11 +101,27 @@ function query(self, plan){
   return repos.query(self.workspace, plan);
 }
 
+function seq(self){
+  return _.map(function(entity){
+    const id = ont.id(entity),
+          backlinks = _.get(self.indexes, ont.criterion(null, null, id));
+    return backlinked(entity, self.workspace, backlinks);
+  }, _.seq(self.workspace));
+}
+
+function lookup(self, id){
+  return _.maybe(self.workspace, _.get(?, id), function(entity){
+    return backlinked(entity, self.workspace, _.get(self.indexes, ont.criterion(null, null, id)))
+  });
+}
+
 export default _.does(
-  _.forward("workspace", _.IMap, _.ISeqable, _.ILookup, _.IReduce, _.ICounted, _.IInclusive, _.IAssociative, _.IIndexed, IEntity, IResolver),
+  _.forward("workspace", _.IMap, _.IReduce, _.ICounted, _.IInclusive, _.IAssociative, _.IIndexed, ont.IEntity, IResolver),
   _.implement(repos.IQueryable, {query}),
   _.implement(ont.ICatalogue, {search}),
   _.implement(IBuffer, {load, update, destroy, transact}),
+  _.implement(_.ILookup, {lookup}),
+  _.implement(_.ISeqable, {seq}),
   _.implement(_.IFunctor, {fmap}),
   _.implement(_.IMap, {dissoc}),
   _.implement(_.IEmptyableCollection, {empty}));

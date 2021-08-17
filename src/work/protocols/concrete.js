@@ -1,4 +1,3 @@
-export * from "./ientity/concrete.js";
 export * from "./ibuffer/concrete.js";
 export * from "./iresolver/concrete.js";
 export * from "./iserializable/concrete.js";

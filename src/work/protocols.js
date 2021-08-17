@@ -1,4 +1,3 @@
-export * from "./protocols/ientity/instance.js";
 export * from "./protocols/ibuffer/instance.js";
 export * from "./protocols/iresolver/instance.js";
 export * from "./protocols/ipersistable/instance.js";

@@ -34,7 +34,7 @@ define(['fetch', 'atomic/core', 'atomic/dom', 'atomic/transducers', 'atomic/tran
           c.tag(["sleuth"]),
           c.tag(["dog"]),
         ]),
-        c.select([], {id: [_.uid("24wab8"), _.uid("cklqr1")]}),
+        c.select([], {id: [_.uid("24wab8"), _.uid("cklqr1"), _.uid("3bpwhp")]}),
         c.peek()
       ]);
     });

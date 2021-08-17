@@ -4,7 +4,6 @@ import * as repos from "atomic/repos";
 import * as ont from "cosmos/ontology";
 import * as p from "../../protocols/concrete.js";
 import {entityWorkspace, c} from "./construct.js";
-import {IEntity} from "../../protocols/ientity/instance.js";
 import {IBuffer} from "../../protocols/ibuffer/instance.js";
 import {IResolver} from "../../protocols/iresolver/instance.js";
 import {buffer as empty} from "../buffer/construct.js";
@@ -31,21 +30,21 @@ function transact(self, txn){
       case "load":
         return [
           _.reduce(function(memo, entity){
-            return _.assoc(memo, p.id(entity), entity);
+            return _.assoc(memo, ont.id(entity), entity);
           }, loaded, args),
           changed,
           _.reduce(function(memo, entity){
-            return _.conj(memo, p.id(entity));
+            return _.conj(memo, ont.id(entity));
           }, ids, args)
         ];
       case "update":
         return [
           loaded,
           _.reduce(function(memo, entity){
-            return _.assoc(memo, p.id(entity), entity);
+            return _.assoc(memo, ont.id(entity), entity);
           }, changed, args),
           _.reduce(function(memo, entity){
-            return _.conj(memo, p.id(entity));
+            return _.conj(memo, ont.id(entity));
           }, ids, args)
         ];
       case "destroy":
@@ -83,7 +82,7 @@ function changes(self){
 }
 
 function includes(self, entity){
-  return _.contains(self, p.id(entity));
+  return _.contains(self, ont.id(entity));
 }
 
 function lookup(self, id){
@@ -139,10 +138,10 @@ function nth(self, idx){
 }
 
 export default _.does(
-  _.implement(IEntity, {id}),
   _.implement(IResolver, {resolve}), //TODO
   _.implement(IBuffer, {load, update, destroy, transact, change, changes, touched}),
   _.implement(repos.IQueryable, {query}),
+  _.implement(ont.IEntity, {id}),
   _.implement(ont.ICatalogue, {search}),
   _.implement(_.IIndexed, {nth}),
   _.implement(_.ICounted, {count}),

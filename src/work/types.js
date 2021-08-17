@@ -1,3 +1,4 @@
+export * from "./types/backlinked.js";
 export * from "./types/buffer.js";
 export * from "./types/edge.js";
 export * from "./types/edge-store.js";
