@@ -7,6 +7,12 @@ import {IVertex} from "../../protocols/ivertex/instance.js";
 import {ISerializable} from "../../protocols/iserializable/instance.js";
 import * as p from "../../protocols/concrete.js";
 
+function equiv(self, other){
+  return other != null && self.entity === other.entity && self.backlinks === other.backlinks && _.reduce(function(memo, id){
+    return memo && (_.get(self.workspace, id) === _.get(other.workspace, id));
+  }, true, self.backlinks);
+}
+
 function ins(self){
   const id = ont.id(self.entity);
   return _.just(self.backlinks, _.mapcat(function(id){
@@ -93,6 +99,7 @@ export default _.does(
   _.implement(IVertex, {ins, outs}),
   _.implement(imm.IHash, {hash}),
   _.implement(vd.IConstrainable, {constraints}),
+  _.implement(_.IEquiv, {equiv}),
   _.implement(_.IDeref, {deref}),
   _.implement(_.IMap, {keys, vals, dissoc}),
   _.implement(_.ILookup, {lookup}),
