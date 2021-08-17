@@ -1,4 +1,5 @@
 export * from "./icaster/concrete.js";
+export * from "./ientity/concrete.js";
 export * from "./ifield/concrete.js";
 export * from "./istruct/concrete.js";
 export * from "./imaker/concrete.js";

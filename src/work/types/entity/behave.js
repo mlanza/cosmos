@@ -3,13 +3,12 @@ import * as vd from "atomic/validates";
 import * as imm from "atomic/immutables";
 import * as ont from "cosmos/ontology";
 import {edge} from "../edge/construct.js";
-import {IEntity} from "../../protocols/ientity/instance.js";
 import {IVertex} from "../../protocols/ivertex/instance.js";
 import {ISerializable} from "../../protocols/iserializable/instance.js";
 import * as p from "../../protocols/concrete.js";
 
 function outs(self){
-  const id = p.id(self);
+  const id = ont.id(self);
   return _.mapcat(function(key){
     const field = ont.fld(self, key);
     return _.get(field, "computed") ? [] : _.map(function(value){
@@ -21,6 +20,16 @@ function outs(self){
 function id(self){
   return _.uid(self.attrs.id);
 }
+
+function attrs1(self){
+  return self.attrs;
+}
+
+function attrs2(self, attrs){
+  return new self.constructor(self.topic, attrs);
+}
+
+export const attrs = _.overload(null, attrs1, attrs2);
 
 function meets(self, ...criteria){
   return _.reduce(function(memo, criterion){
@@ -86,12 +95,13 @@ function hash(self){
 }
 
 export default _.does(
-  _.implement(IEntity, {id, meets}),
   _.implement(ISerializable, {serialize}),
   _.implement(IVertex, {outs}),
   _.implement(imm.IHash, {hash}),
   _.implement(vd.IConstrainable, {constraints}),
+  _.implement(_.IDeref, {deref: _.identity}),
   _.implement(_.IMap, {keys, vals, dissoc}),
   _.implement(_.ILookup, {lookup}),
   _.implement(_.IAssociative, {assoc, contains}),
+  _.implement(ont.IEntity, {id, attrs, meets}),
   _.implement(ont.IStruct, {fld}));
