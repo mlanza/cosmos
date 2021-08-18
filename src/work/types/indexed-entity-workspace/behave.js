@@ -8,9 +8,6 @@ import {IBuffer} from "../../protocols/ibuffer/instance.js";
 import {Backlinked, backlinked} from "../backlinked/construct.js";
 import {buffer as empty} from "../buffer/construct.js";
 
-//TODO utilize indices for finding - indices may be approximations so results must still be filtered
-//TODO provide backlinks (`ins`) on entities
-
 function search(self, criteria){
   const sets = _.just(criteria, _.mapcat(function(criterion){
     return ont.indices(self.librarian, criterion);
@@ -102,17 +99,11 @@ function query(self, plan){
 }
 
 function seq(self){
-  return _.map(function(entity){
-    const id = ont.id(entity),
-          backlinks = _.get(self.indexes, ont.criterion(null, null, id));
-    return backlinked(entity, self.workspace, backlinks);
-  }, _.seq(self.workspace));
+  return _.map(backlinked(?, self.workspace, self.indexes), _.seq(self.workspace));
 }
 
 function lookup(self, id){
-  return _.maybe(self.workspace, _.get(?, id), function(entity){
-    return backlinked(entity, self.workspace, _.get(self.indexes, ont.criterion(null, null, id)))
-  });
+  return _.maybe(self.workspace, _.get(?, id), backlinked(?, self.workspace, self.indexes));
 }
 
 export default _.does(
@@ -125,4 +116,3 @@ export default _.does(
   _.implement(_.IFunctor, {fmap}),
   _.implement(_.IMap, {dissoc}),
   _.implement(_.IEmptyableCollection, {empty}));
-

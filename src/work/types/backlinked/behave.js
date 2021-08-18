@@ -7,16 +7,21 @@ import {IVertex} from "../../protocols/ivertex/instance.js";
 import {ISerializable} from "../../protocols/iserializable/instance.js";
 import * as p from "../../protocols/concrete.js";
 
+function backlinks(self){
+  return self.backlinks || (self.backlinks = _.get(self.indexes, ont.criterion(null, null, ont.id(self))));
+}
+
 function equiv(self, other){
-  return other != null && self.entity === other.entity && self.backlinks === other.backlinks && _.reduce(function(memo, id){
+  let links;
+  return other != null && self.entity === other.entity && (links = backlinks(self), links === backlinks(other) && _.reduce(function(memo, id){
     return memo && (_.get(self.workspace, id) === _.get(other.workspace, id));
-  }, true, self.backlinks);
+  }, true, links));
 }
 
 function ins(self){
   const id = ont.id(self.entity);
-  return _.just(self.backlinks, _.mapcat(function(id){
-    return p.outs(_.get(self.workspace, id))
+  return _.just(backlinks(self), _.mapcat(function(id){
+    return p.outs(_.get(self.workspace, id));
   }, ?), _.filter(function(edge){
     return _.eq(id, _.get(edge, "object"));
   }, ?));
@@ -35,7 +40,7 @@ function attrs1(self){
 }
 
 function attrs2(self, attrs){
-  return new self.constructor(ont.attrs(self.entity, attrs), self.backlinks);
+  return new self.constructor(ont.attrs(self.entity, attrs), self.indexes);
 }
 
 export const attrs = _.overload(null, attrs1, attrs2);
@@ -91,7 +96,7 @@ function serialize(self){
 }
 
 function hash(self){
-  return imm.hash([self.entity, self.backlinks]);
+  return imm.hash([self.entity, backlinks(self)]);
 }
 
 export default _.does(
